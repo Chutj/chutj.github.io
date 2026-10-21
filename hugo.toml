@@ -1,0 +1,15 @@
+baseURL = 'https://chutj.github.io/'
+locale = 'zh-cn'
+defaultContentLanguage = 'zh-cn'
+title = '个人学术博客'
+theme = 'PaperMod'
+hasCJKLanguage = true
+
+[params]
+mainSections = ['posts']
+description = '记录学习笔记、科研方法、技术实践与文献阅读。'
+defaultTheme = 'auto'
+
+[params.homeInfoParams]
+Title = '你好，欢迎来到我的学术博客'
+Content = '这里记录我的学习笔记、科研方法、技术教程与文献阅读心得。希望通过持续记录与分享，让学习和研究的积累有迹可循。网站正在建设中，内容将逐步更新。'
