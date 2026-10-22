@@ -1,15 +1,33 @@
 baseURL = 'https://chutj.github.io/'
-locale = 'zh-cn'
-defaultContentLanguage = 'zh-cn'
-title = '个人学术博客'
+locale = 'en'
+defaultContentLanguage = 'en'
+title = 'My Academic Website'
 theme = 'PaperMod'
-hasCJKLanguage = true
+hasCJKLanguage = false
+buildDrafts = false
 
 [params]
 mainSections = ['posts']
-description = '记录学习笔记、科研方法、技术实践与文献阅读。'
+description = 'A personal space for academic exploration, scientific visualization, and sharing useful research resources.'
 defaultTheme = 'auto'
 
-[params.homeInfoParams]
-Title = '你好，欢迎来到我的学术博客'
-Content = '这里记录我的学习笔记、科研方法、技术教程与文献阅读心得。希望通过持续记录与分享，让学习和研究的积累有迹可循。网站正在建设中，内容将逐步更新。'
+[params.profileMode]
+enabled = true
+title = 'Welcome to My Academic Website'
+subtitle = 'A personal space for academic exploration, scientific visualization, and sharing useful research resources. Personal introduction and research interests will be added here.'
+
+[[params.profileMode.buttons]]
+name = 'Explore Figure Gallery'
+url = '/gallery/'
+
+[[menus.main]]
+identifier = 'home'
+name = 'Home'
+url = '/'
+weight = 10
+
+[[menus.main]]
+identifier = 'gallery'
+name = 'Figure Gallery'
+url = '/gallery/'
+weight = 20

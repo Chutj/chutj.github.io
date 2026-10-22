@@ -4,7 +4,21 @@
 /.hugo_build.lock
 /hugo_stats.json
 
+# Private FIG preview inputs, copied images, translations and build output
+/.gallery-local/
+
+# Local Python importer/test caches
+__pycache__/
+*.py[cod]
+
 # Operating system files
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Private credentials and source papers are never website source files
+.env
+.env.*
+*.pem
+*.key
+*.pdf

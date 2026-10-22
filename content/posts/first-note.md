@@ -1,7 +1,7 @@
 +++
 title = '我的第一篇学习笔记'
 date = 2026-10-21T21:00:00+08:00
-draft = false
+draft = true
 categories = ['学习笔记']
 tags = ['Hugo', 'Markdown']
 summary = '通过一篇中文学习笔记，验证 Hugo 和 PaperMod 对 Markdown 标题、段落、列表及 Python 代码块的展示。'

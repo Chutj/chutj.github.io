@@ -48,6 +48,9 @@ jobs:
           tar -xzf "${RUNNER_TEMP}/hugo.tar.gz" -C "${RUNNER_TEMP}/hugo"
           echo "${RUNNER_TEMP}/hugo" >> "${GITHUB_PATH}"
 
+      - name: Validate public Gallery whitelist
+        run: python3 scripts/validate_public_gallery.py
+
       - name: Build website
         env:
           HUGO_ENVIRONMENT: production
@@ -56,6 +59,9 @@ jobs:
         run: |
           hugo version
           hugo build --minify --baseURL "${PAGES_BASE_URL}/" --destination public
+
+      - name: Check published output for private Gallery paths
+        run: python3 scripts/validate_public_gallery.py --output public
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
