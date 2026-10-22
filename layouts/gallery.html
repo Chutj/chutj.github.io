@@ -1,5 +1,8 @@
 {{ define "main" }}
 <header class="page-header"><h1>{{ .Title }}</h1><p>{{ .Description }}</p></header>
+{{ $css := resources.Get "css/gallery.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
+{{ partial "gallery/licensing.html" . }}
 {{ $catalogPath := site.Params.galleryCatalog | default ".gallery-local/catalog.json" }}
 {{ $mode := "public" }}
 {{ $figures := slice }}
@@ -19,12 +22,11 @@
   {{ end }}
 {{ else }}
   {{ $figures = partial "gallery/public-records.html" . }}
+  {{ if site.Params.galleryCandidatePreview }}{{ $mode = "candidate" }}{{ end }}
 {{ end }}
 {{ if gt (len $figures) 0 }}
-  {{ $css := resources.Get "css/gallery.css" | minify | fingerprint }}
-  <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
   <section id="figure-gallery" aria-label="Figure library">
-    <p class="gallery-notice">{{ if eq $mode "local" }}<strong>Local preview</strong> · {{ len $figures }} figures from your reference library. Image publication rights have not been reviewed.{{ else }}<strong>Public reference library</strong> · {{ len $figures }} figures with reviewed publication permission.{{ end }}</p>
+    <p class="gallery-notice">{{ if eq $mode "local" }}<strong>Local preview</strong> · {{ len $figures }} figures. Rights assessment does not constitute publication approval.{{ else if site.Params.galleryCandidatePreview }}<strong>Candidate preview — pending final confirmation</strong> · {{ len $figures }} figures. This isolated preview does not approve or publish any figure.{{ else }}<strong>Public reference library</strong> · {{ len $figures }} figures with reviewed publication permission.{{ end }}</p>
     <div class="gallery-controls">
       <label for="gallery-query">Search the library<input id="gallery-query" type="search" placeholder="Title, DOI, journal, color or method…" autocomplete="off"></label>
       <label for="gallery-category">Category<select id="gallery-category"><option value="">All categories</option></select></label>
@@ -49,7 +51,7 @@
       <div id="detail-viewport" tabindex="0" role="region" aria-label="Scrollable figure image"><img id="detail-image" alt=""></div>
       <p id="detail-image-error" hidden>Image unavailable. The reference notes remain available below.</p>
       <p id="detail-categories"></p>
-      <h3>Paper source</h3><p id="detail-paper"></p><p id="detail-author"></p><a id="detail-doi" target="_blank" rel="noopener"></a>
+      <h3>Original Paper</h3><p id="detail-paper"></p><p id="detail-author"></p><a id="detail-doi" target="_blank" rel="noopener"></a>
       <p id="detail-rights" class="gallery-muted" hidden></p>
       <p id="detail-translation" class="gallery-muted">English translation of the existing library notes. Verification statements below describe the source notes, not a new literature review.</p>
       <div id="detail-notes"></div>

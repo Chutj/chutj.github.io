@@ -180,6 +180,11 @@ class IncrementalGalleryTest(unittest.TestCase):
 
     def test_public_build_isolation(self):
         self.run_import()
+        public = json.loads((importer.ROOT/'data/gallery/public.json').read_text(encoding='utf-8'))['records']
+        expected_ids = {record['id'] for record in public}
+        manifest = importer.ROOT/'data/gallery/media.json'
+        media = json.loads(manifest.read_text(encoding='utf-8'))['files'] if manifest.exists() else []
+        expected_paths = {item['url'].removeprefix('https://chutj.github.io/') for item in media}
         hugo = shutil.which('hugo') or str(Path.home()/'AppData/Local/Microsoft/WinGet/Packages/Hugo.Hugo.Extended_Microsoft.Winget.Source_8wekyb3d8bbwe/hugo.exe')
         for name, extra in [('production', []), ('overlay', ['--config','hugo.toml,'+str(self.output/'hugo.toml'),'--environment','development'])]:
             target = self.base / ('build-'+name)
@@ -188,9 +193,16 @@ class IncrementalGalleryTest(unittest.TestCase):
             self.assertEqual(built.returncode,0,built.stderr)
             self.assertEqual(built.stderr,'')
             html = (target/'gallery/index.html').read_text(encoding='utf-8')
-            self.assertIn('Coming soon',html)
-            self.assertNotIn('gallery-data',html)
-            self.assertFalse(any(p.suffix.lower() in ('.png','.jpg','.webp') for p in target.rglob('*')))
+            if not expected_ids:
+                self.assertIn('Coming soon',html)
+                self.assertNotIn('gallery-data',html)
+            else:
+                self.assertIn('gallery-data',html)
+                for uid in expected_ids:self.assertIn(uid,html)
+            for record in self.catalog():
+                if record['id'] not in expected_ids:self.assertNotIn(record['id'],html)
+            actual_paths = {p.relative_to(target).as_posix() for p in target.rglob('*') if p.suffix.lower() in ('.png','.jpg','.webp')}
+            self.assertEqual(actual_paths,expected_paths)
 
 
 if __name__ == '__main__':

@@ -4,11 +4,12 @@
   if (!data) return;
   let raw;
   try { raw = JSON.parse(data.textContent); } catch { raw = []; }
-  const publicMode = data.dataset.mode === 'public';
+  const candidateMode = data.dataset.mode === 'candidate';
+  const publicMode = data.dataset.mode === 'public' || candidateMode;
   const publicHosts = (data.dataset.imageHosts || '').split(',').filter(Boolean);
   const safePath = value => {
     if (typeof value !== 'string') return '';
-    if (!publicMode) return /^\/(?!\/)[^\\]*$/.test(value) ? value : '';
+    if (!publicMode || candidateMode) return /^\/(?!\/)[^\\]*$/.test(value) ? value : '';
     try {
       const url = new URL(value);
       return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash
@@ -92,13 +93,23 @@
     text('detail-title', figure.title); text('detail-meta', meta(figure));
     text('detail-categories', figure.categories.length ? `Filed under: ${figure.categories.join(' · ')}` : 'Category unavailable');
     text('detail-paper', figure.paper || 'Paper title unavailable');
-    text('detail-translation', !figure.translation_status || figure.translation_status === 'reviewed'
+    text('detail-translation', publicMode ? 'Independently written English summary based on the cited paper; not a reproduction of its original caption.' : !figure.translation_status || figure.translation_status === 'reviewed'
       ? 'English translation of the existing library notes. Verification statements describe the source notes, not a new literature review.'
       : 'English translation pending review. Original notes are retained in the local inventory. Any PDF-based candidate below is a draft requiring human review.');
-    text('detail-author', figure.author ? `First author: ${figure.author}` : 'Author information unavailable');
+    text('detail-author', figure.author ? `${publicMode ? 'Authors' : 'First author'}: ${figure.author}` : 'Author information unavailable');
     const rights = document.getElementById('detail-rights');
     rights.hidden = !publicMode;
-    rights.textContent = publicMode ? `Attribution: ${figure.rights.attribution} · License: ${figure.rights.license}` : '';
+    rights.textContent = '';
+    if (publicMode) {
+      const r = figure.rights || {};
+      [['Authors / Attribution', r.attribution], ['License Type and Version', r.license],
+        ['Modification Status', r.modification_status], ['Additional Credit or Permission Notice', r.additional_credit]]
+        .forEach(([label, value]) => {
+          const p = document.createElement('span'); p.style.display = 'block';
+          p.textContent = `${label}: ${value || 'Not recorded — publication review incomplete'}`;
+          rights.append(p);
+        });
+    }
     if (publicMode && typeof figure.rights.license_url === 'string'
         && figure.rights.license_url.startsWith('https://')) {
       const license = document.createElement('a'); license.href = figure.rights.license_url;

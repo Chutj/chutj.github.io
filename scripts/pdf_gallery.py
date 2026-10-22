@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 sys.dont_write_bytecode = True
-VERSION = 1
+VERSION = 2
 DOI = re.compile(r'10\.\d{4,9}/[-._;/:A-Za-z0-9]+', re.I)
-CAPTION = re.compile(r'^\s*(Fig(?:ure)?\.?\s*(\d+))\s*[|:]', re.I)
+CAPTION = re.compile(r'^\s*(Fig(?:ure)?\.?\s*(\d+))\s*(?:[|:]|\.(?=\s))', re.I)
 
 
 def digest(value):

@@ -73,6 +73,14 @@ class PDFReviewTest(unittest.TestCase):
         edited=self.source/'PDF原文/edited.pdf';doc.save(edited);doc.close();self.registry(edited)
         self.assertEqual(self.build()[1]['captions_located'],0)
 
+    def test_period_delimited_caption_and_body_mention(self):
+        path=self.make_pdf(caption='Fig. 1. Synthetic period-delimited publisher caption.')
+        self.registry(path)
+        writes,stats=self.build()
+        self.assertEqual(stats['captions_located'],1)
+        self.assertTrue(self.review(writes)['reference']['caption']['text'].startswith('Fig. 1.'))
+        self.assertFalse(pdf.CAPTION.match('Fig. 1 shows a body-only reference.'))
+
     def test_cache_dry_plan_idempotence_and_pdf_change_invalidates_rights(self):
         path=self.make_pdf();self.registry(path)
         writes,stats=self.build()

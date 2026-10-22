@@ -40,3 +40,8 @@ body.gallery-page .main{max-width:1180px}
 @media(max-width:1099px){.gallery-grid{--gallery-columns:2}.gallery-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gallery-controls button{justify-self:start}}
 @media(max-width:600px){.gallery-grid{--gallery-gap:12px}.gallery-controls{gap:10px}.gallery-controls label:first-child{grid-column:1/-1}.gallery-controls label{font-size:13px}.gallery-controls input,.gallery-controls select{padding:10px 8px}.figure-card-body{padding:11px;gap:7px}.figure-card h2{font-size:15px}.figure-card p,.figure-category,.figure-action{font-size:11px}.detail-body{padding:16px}#figure-detail{width:96vw;max-height:94vh;max-height:94dvh}.detail-toolbar{padding:10px 16px}.image-controls{gap:6px}#figure-detail button{padding:8px 10px}}
 @media(max-width:359px){.gallery-grid{--gallery-columns:1}.gallery-controls{grid-template-columns:1fr}.gallery-controls label:first-child{grid-column:auto}.figure-card h2{font-size:18px}}
+.gallery-licensing { margin: 1rem 0 1.5rem; font-size: .9rem; line-height: 1.65; color: var(--secondary); }
+.gallery-licensing summary { cursor: pointer; color: var(--primary); font-weight: 600; padding: .4rem 0; }
+.gallery-licensing p { margin: .7rem 0; }
+.gallery-licensing a { text-decoration: underline; overflow-wrap: anywhere; }
+.gallery-licensing details { border-bottom: 1px solid var(--border); padding-bottom: .6rem; }

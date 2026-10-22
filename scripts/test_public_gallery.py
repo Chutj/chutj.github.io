@@ -25,7 +25,8 @@ def fixture():
     rights=dict(status='approved',public_use_allowed=True,human_reviewed=True,
         approved_by='policy-test-only',approved_at='2020-01-01',permission_basis='license',
         license='Synthetic test permission',license_url='https://example.org/policy',
-        evidence_reference='TEST-NOT-A-REAL-PERMISSION',attribution='Synthetic policy fixture only',review_evidence_sha256='b'*64)
+        evidence_reference='TEST-NOT-A-REAL-PERMISSION',attribution='Synthetic policy fixture only',review_evidence_sha256='b'*64,
+        modification_status='Synthetic fixture, no actual image.',additional_credit='Test fixture only.')
     approval=dict(id=record['id'],source_image_sha256='a'*64,metadata_sha256=metadata_hash(record),
         rights=rights,image='https://cdn.example.org/fixture.png',thumbnail='https://cdn.example.org/fixture-thumb.webp',
         srcset='https://cdn.example.org/fixture-small.webp 320w, https://cdn.example.org/fixture-thumb.webp 640w')

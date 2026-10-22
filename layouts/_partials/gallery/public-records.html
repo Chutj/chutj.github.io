@@ -8,6 +8,9 @@
     {{ $rights := $r.rights }}
     {{ $eligible := and (eq $r.id $a.id) (eq $rights.status "approved") (eq $rights.public_use_allowed true) (eq $rights.human_reviewed true) $rights.approved_by $rights.approved_at $rights.license $rights.evidence_reference $rights.attribution (eq $r.translation_status "reviewed") (eq $r.source_image_sha256 $a.source_image_sha256) (eq $r.metadata_sha256 $a.metadata_sha256) (eq (jsonify $rights) (jsonify $a.rights)) (eq $r.image $a.image) (eq $r.thumbnail $a.thumbnail) (eq $r.srcset $a.srcset) }}
     {{ if $eligible }}
+      {{ $eligible = and $rights.modification_status $rights.additional_credit }}
+    {{ end }}
+    {{ if $eligible }}
       {{ $eligible = eq (len (findRE `^[a-f0-9]{64}$` ($rights.review_evidence_sha256 | default ""))) 1 }}
     {{ end }}
     {{ if $eligible }}

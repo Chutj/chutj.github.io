@@ -9,7 +9,8 @@ from urllib.parse import urlsplit
 EDITOR_FIELDS = ('id', 'title', 'primary', 'categories', 'journal', 'year', 'doi',
                  'figure', 'paper', 'author', 'source', 'sections', 'translation_status', 'width', 'height')
 RIGHTS_FIELDS = ('status', 'public_use_allowed', 'human_reviewed', 'approved_by', 'approved_at',
-                'permission_basis', 'license', 'license_url', 'evidence_reference', 'attribution', 'review_evidence_sha256')
+                'permission_basis', 'license', 'license_url', 'evidence_reference', 'attribution', 'review_evidence_sha256',
+                'modification_status', 'additional_credit')
 PUBLIC_FIELDS = set(EDITOR_FIELDS) | {'source_image_sha256', 'metadata_sha256', 'rights', 'image', 'thumbnail', 'srcset'}
 APPROVAL_FIELDS = {'id', 'source_image_sha256', 'metadata_sha256', 'rights', 'image', 'thumbnail', 'srcset'}
 SECTIONS = {'What the figure shows', 'Statistics & symbols', 'Color & encoding', 'Design lessons', 'Verification & limitations'}
@@ -55,7 +56,7 @@ def validate_rights(rights):
     require(isinstance(rights, dict) and set(rights) == set(RIGHTS_FIELDS), 'Explicit, complete public rights fields required')
     require(rights['status'] == 'approved' and rights['public_use_allowed'] is True
             and rights['human_reviewed'] is True, 'Unverified or non-human-reviewed rights cannot be public')
-    for field in ('approved_by', 'approved_at', 'license', 'evidence_reference', 'attribution'):
+    for field in ('approved_by', 'approved_at', 'license', 'evidence_reference', 'attribution', 'modification_status', 'additional_credit'):
         require(isinstance(rights[field], str) and rights[field].strip(), f'Missing rights.{field}')
     require(not LOCAL_TEXT.search(json.dumps(rights, ensure_ascii=False)), 'Private/non-English rights text rejected')
     try:

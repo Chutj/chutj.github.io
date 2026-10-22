@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "id": "fig-3c36bb362a2d539c96405f331c28fc8e",
+      "url": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-320.webp",
+      "sha256": "29f8a98ca2b806d6d0bdff3462d187b8bb8600a70c22cedd40956b5c09fee858"
+    },
+    {
+      "id": "fig-3c36bb362a2d539c96405f331c28fc8e",
+      "url": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-640.webp",
+      "sha256": "01ecba6b7a1094ab0a8f4e732a51f0ecece138fc7b01f5e87c4ef7f3d0571d0d"
+    },
+    {
+      "id": "fig-3c36bb362a2d539c96405f331c28fc8e",
+      "url": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-960.webp",
+      "sha256": "cb1094bf61a9e0290a02be8d2331e3448f246c4bd9aae964aa84ce6439b5d0d0"
+    },
+    {
+      "id": "fig-3c36bb362a2d539c96405f331c28fc8e",
+      "url": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2.png",
+      "sha256": "b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38"
+    }
+  ]
+}

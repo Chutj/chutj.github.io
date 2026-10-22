@@ -7,6 +7,7 @@ import re
 import subprocess
 from pathlib import Path
 from public_gallery_schema import validate_dataset
+from public_gallery_media import validate_media
 
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN = ('.gallery-local/', 'public/', 'resources/_gen/', 'assets/gallery-private/', 'static/gallery-private/')
@@ -16,6 +17,7 @@ def validate(root=ROOT, output=None):
     dataset = json.loads((root/'data/gallery/public.json').read_text(encoding='utf-8-sig'))
     policy = json.loads((root/'data/gallery/allowlist.json').read_text(encoding='utf-8-sig'))
     count = validate_dataset(dataset,policy)
+    validate_media(root, dataset, policy, output)
     tracked = subprocess.check_output(['git','-C',str(root),'ls-files','-z'],text=True).split('\0')
     bad = [p for p in tracked if p.startswith(FORBIDDEN)
            or Path(p).suffix.lower() in ('.pdf','.pem','.key')

@@ -95,9 +95,8 @@ def check(hugo):
     command(['git','checkout','--detach',pin],target_theme)
     if (candidate/'.gallery-local').exists():
         raise ValueError('Private data leaked into candidate snapshot')
-    if any(p.suffix.lower() in ('.png','.jpg','.jpeg','.webp') for p in candidate.rglob('*')
-           if '.git' not in p.parts and 'themes' not in p.parts):
-        raise ValueError('Unexpected raster image in public source snapshot')
+    # The public validator accepts only exact, explicitly approved media hashes.
+    # All other raster source/output files continue to fail closed.
     command([sys.executable,'-S','scripts/validate_public_gallery.py'],candidate,env)
     candidate_output=build(candidate,'candidate')
     command([sys.executable,'-S','scripts/validate_public_gallery.py','--output',str(candidate_output)],candidate,env)

@@ -1,4 +1,53 @@
 {
   "schema_version": 1,
-  "records": []
+  "records": [
+    {
+      "id": "fig-3c36bb362a2d539c96405f331c28fc8e",
+      "title": "Land-degradation associations across regression specifications",
+      "primary": "Error bars, intervals & forest plots",
+      "categories": [
+        "Legends, color scales & symbols",
+        "Multi-panel layouts",
+        "Error bars, intervals & forest plots",
+        "Color references"
+      ],
+      "journal": "Nature Food",
+      "year": 2026,
+      "doi": "10.1038/s43016-026-01382-5",
+      "figure": "Fig.2 a-b",
+      "paper": "Land degradation is associated with larger crop yield gaps across global croplands",
+      "author": "Hadi Hadi; D. K. Ray; P. Borrelli; J. S. Gerber; N. Shokri; S. Roman; D. Wuepper",
+      "source": "https://doi.org/10.1038/s43016-026-01382-5",
+      "sections": {
+        "Color & encoding": "The baseline is emphasized with coral color or filled symbols; the component panels use separate colors for degradation measures.",
+        "Design lessons": "Align specification order and zero references across panels to reveal changes in sign and uncertainty.",
+        "Statistics & symbols": "Points are marginal association estimates and bars are 95% confidence intervals, based on 405,084 grid cells. Model 4 is the preferred baseline; alternative specifications and standard-error choices assess robustness.",
+        "Verification & limitations": "These are regression associations, not thirteen causal-forest models. Confidence intervals are not observation ranges, and preprocessing matters for elasticity interpretation.",
+        "What the figure shows": "The upper panel summarizes the overall land-degradation association with crop yield gaps, while five smaller panels separate individual degradation measures across thirteen model specifications."
+      },
+      "translation_status": "reviewed",
+      "width": 1929,
+      "height": 1433,
+      "rights": {
+        "status": "approved",
+        "human_reviewed": true,
+        "public_use_allowed": true,
+        "approved_by": "Website owner — explicit Step 23 confirmation",
+        "approved_at": "2026-10-22",
+        "permission_basis": "license",
+        "license": "CC BY 4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_reference": "STEP22-HADI-FIG2-20261022",
+        "review_evidence_sha256": "003be713aa50bc33342bc38bedafbe341624f21e61df6736d5f690c4a15f5d9d",
+        "attribution": "Hadi Hadi; D. K. Ray; P. Borrelli; J. S. Gerber; N. Shokri; S. Roman; D. Wuepper. Land degradation is associated with larger crop yield gaps across global croplands. Nature Food 7, 678-687 (2026), Figure 2 (panels a-b). https://doi.org/10.1038/s43016-026-01382-5. Originally published by Springer Nature. Copyright The Author(s) 2026. CC BY 4.0. See linked terms for the license and disclaimer of warranties.",
+        "modification_status": "Complete Figure 2 (panels a-b) extracted from the publisher PDF, excluding its caption. Proportional resizing and WebP conversion for thumbnails only. No relabeling, recoloring or panel rearrangement identified in visual comparison; not a pixel-identity certification.",
+        "additional_credit": "No separate third-party credit or license exception identified for Figure 2 in the reviewed PDF and saved official article. The TM World Borders credit in Figure 1 does not apply to this figure."
+      },
+      "metadata_sha256": "5b2ef6a0a018bde620330a72bf4fe38ab3d29ed4bbe0b23dbe490e1c375b641d",
+      "image": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2.png",
+      "source_image_sha256": "b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38",
+      "thumbnail": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-640.webp",
+      "srcset": "https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-320.webp 320w, https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-640.webp 640w, https://chutj.github.io/figures/approved/b812ab6a3b150197cd56caa758d7ea29c9ca38859e7160b9abfe5e8841862a38/figure-2-960.webp 960w"
+    }
+  ]
 }
