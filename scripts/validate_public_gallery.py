@@ -10,17 +10,29 @@ from public_gallery_schema import validate_dataset
 from public_gallery_media import validate_media
 
 ROOT = Path(__file__).resolve().parents[1]
-FORBIDDEN = ('.gallery-local/', 'public/', 'resources/_gen/', 'assets/gallery-private/', 'static/gallery-private/')
+FORBIDDEN = ('.gallery-local/', '.gallery-dev/', 'public/', 'resources/_gen/', 'assets/gallery-private/', 'static/gallery-private/')
 
 
 def validate(root=ROOT, output=None):
+    if (root/'gallery-component.lock.json').exists():
+        from check_gallery_component import validate_component_lock
+        validate_component_lock(root)
+    elif (root/'gallery-component.json').exists():
+        from check_gallery_component import component_paths
+        descriptor=json.loads((root/'gallery-component.json').read_text(encoding='utf-8'))
+        media=json.loads((root/'data/gallery/media.json').read_text(encoding='utf-8'))
+        for name in component_paths(descriptor,media):
+            path=root/name
+            if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or not path.is_file():
+                raise ValueError('Missing or unsafe component export: '+name)
     dataset = json.loads((root/'data/gallery/public.json').read_text(encoding='utf-8-sig'))
     policy = json.loads((root/'data/gallery/allowlist.json').read_text(encoding='utf-8-sig'))
     count = validate_dataset(dataset,policy)
     validate_media(root, dataset, policy, output)
     tracked = subprocess.check_output(['git','-C',str(root),'ls-files','-z'],text=True).split('\0')
     bad = [p for p in tracked if p.startswith(FORBIDDEN)
-           or Path(p).suffix.lower() in ('.pdf','.pem','.key')
+           or Path(p).suffix.lower() in ('.pdf','.sqlite','.db','.pem','.key')
+           or Path(p).name == 'private-bindings.json'
            or Path(p).name == '.env' or Path(p).name.startswith('.env.')]
     if bad:
         raise ValueError('Private/generated files tracked: '+', '.join(bad))
