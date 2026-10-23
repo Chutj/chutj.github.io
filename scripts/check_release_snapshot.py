@@ -18,8 +18,8 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def command(args,cwd,env=None):
-    run=subprocess.run(args,cwd=cwd,capture_output=True,encoding='utf-8',env=env)
+def command(args,cwd,env=None,input_text=None):
+    run=subprocess.run(args,cwd=cwd,capture_output=True,encoding='utf-8',env=env,input=input_text)
     if run.returncode:
         raise RuntimeError('Command failed: '+' '.join(str(a) for a in args)+'\n'+run.stdout+run.stderr)
     return run.stdout,run.stderr
@@ -72,7 +72,8 @@ def check(hugo):
         paths.append(name)
     # This is the disposable clone, not ROOT.
     assert checkout.resolve().is_relative_to(work.resolve())
-    command(['git','add','--',*paths],checkout)
+    command(['git','add','--pathspec-from-file=-','--pathspec-file-nul'],checkout,
+        input_text='\0'.join(paths)+'\0')
     changes=command(['git','diff','--cached','--name-status','HEAD'],checkout)[0].splitlines()
     tree=command(['git','write-tree'],checkout)[0].strip()
     archived=subprocess.check_output(['git','archive','--format=tar',tree],cwd=checkout)
