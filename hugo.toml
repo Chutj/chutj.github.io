@@ -31,3 +31,9 @@ identifier = 'gallery'
 name = 'Figure Gallery'
 url = '/gallery/'
 weight = 20
+
+[[menus.main]]
+identifier = 'gee-access'
+name = 'GEE Access'
+url = '/gee-access/'
+weight = 30
