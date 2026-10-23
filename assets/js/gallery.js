@@ -7,6 +7,7 @@
   const candidateMode = data.dataset.mode === 'candidate';
   const publicMode = data.dataset.mode === 'public' || candidateMode;
   const publicHosts = (data.dataset.imageHosts || '').split(',').filter(Boolean);
+  const tools = globalThis.GalleryTools;
   const safePath = value => {
     if (typeof value !== 'string') return '';
     if (!publicMode || candidateMode) return /^\/(?!\/)[^\\]*$/.test(value) ? value : '';
@@ -33,6 +34,9 @@
   const image = document.getElementById('detail-image');
   const viewport = document.getElementById('detail-viewport');
   const count = document.getElementById('gallery-count');
+  const advancedPanel = document.getElementById('gallery-advanced');
+  const advancedInputs = [...advancedPanel.querySelectorAll('[data-search-field]')];
+  const paletteCache = new Map();
   let opener, activeFigure, zoom = 1, pendingLayout = 0;
   const text = (id, value) => { document.getElementById(id).textContent = value || ''; };
   const meta = figure => [figure.journal, figure.year, figure.figure].filter(Boolean).join(' · ') || 'Source information unavailable';
@@ -87,14 +91,65 @@
     image.hidden = true;
     text('zoom-level', 'Image unavailable');
     document.getElementById('detail-image-error').hidden = false;
+    const caption = document.getElementById('detail-color-caption');
+    if (caption && !tools.recordedColors(activeFigure || {}).length) caption.textContent = 'Color samples are unavailable for this image.';
   });
+  function showPalette(colors, caption) {
+    const palette = document.getElementById('detail-palette');
+    if (!palette) return;
+    palette.replaceChildren(); text('detail-color-caption', caption);
+    const recorded = new Set(tools.recordedColors(activeFigure || {}));
+    colors.forEach(hex => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'color-swatch';
+      button.setAttribute('aria-label', `Copy color ${hex}`); button.title = `Copy ${hex}`;
+      const chip = document.createElement('span'); chip.className = 'color-chip'; chip.style.backgroundColor = hex; chip.setAttribute('aria-hidden', 'true');
+      const code = document.createElement('code'); code.textContent = hex;
+      const source = document.createElement('span'); source.className = 'color-source';
+      source.textContent = recorded.has(hex) ? 'From notes' : 'Sampled';
+      button.append(chip, code, source); palette.append(button);
+      button.addEventListener('click', async () => {
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+          await navigator.clipboard.writeText(hex);
+          text('detail-color-status', `Copied ${hex}`);
+        } catch {
+          text('detail-color-status', `Copy is unavailable in this browser. Select this HEX value: ${hex}`);
+        }
+      });
+    });
+  }
+  function updatePalette() {
+    if (!activeFigure || !document.getElementById('detail-palette')) return;
+    const recorded = tools.recordedColors(activeFigure);
+    if (recorded.length) showPalette(recorded, 'HEX values recorded in the figure notes. Click a swatch to copy.');
+    const key = `${activeFigure.id}|${activeFigure.image}`;
+    const showSamples = colors => showPalette([...new Set([...recorded, ...colors])].slice(0, 8),
+      colors.length ? 'Each color is labeled as recorded or sampled. Sampled values are approximate, not author-specified HEX values. Click a swatch to copy.'
+      : recorded.length ? 'HEX values recorded in the figure notes. Click a swatch to copy.' : 'No distinct colors could be sampled from this image.');
+    if (paletteCache.has(key)) { showSamples(paletteCache.get(key)); return; }
+    if (!image.complete || !image.naturalWidth) return;
+    try {
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(1, 220 / Math.max(image.naturalWidth, image.naturalHeight));
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+      const context = canvas.getContext('2d', {willReadFrequently: true});
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const colors = tools.sampleColors(context.getImageData(0, 0, canvas.width, canvas.height).data);
+      paletteCache.set(key, colors);
+      showSamples(colors);
+    } catch {
+      showPalette(recorded, 'Image sampling is unavailable. Any displayed HEX values come from the figure notes.');
+    }
+  }
+  image.addEventListener('load', updatePalette);
   function openFigure(figure, button) {
     opener = button; activeFigure = figure;
     text('detail-title', figure.title); text('detail-meta', meta(figure));
     text('detail-categories', figure.categories.length ? `Filed under: ${figure.categories.join(' · ')}` : 'Category unavailable');
     text('detail-paper', figure.paper || 'Paper title unavailable');
     text('detail-translation', publicMode ? 'Independently written English summary based on the cited paper; not a reproduction of its original caption.' : !figure.translation_status || figure.translation_status === 'reviewed'
-      ? 'English translation of the existing library notes. Verification statements describe the source notes, not a new literature review.'
+      ? 'English translation of the existing library notes.'
       : 'English translation pending review. Original notes are retained in the local inventory. Any PDF-based candidate below is a draft requiring human review.');
     text('detail-author', figure.author ? `${publicMode ? 'Authors' : 'First author'}: ${figure.author}` : 'Author information unavailable');
     const rights = document.getElementById('detail-rights');
@@ -130,12 +185,20 @@
     doi.textContent = validDOI ? `DOI: ${figure.doi}` : 'DOI unavailable';
     if (validDOI) doi.href = `https://doi.org/${figure.doi}`;
     const notes = document.getElementById('detail-notes'); notes.replaceChildren();
-    ['What the figure shows', 'Statistics & symbols', 'Color & encoding',
-      'Design lessons', 'Verification & limitations'].forEach(heading => {
+    tools.sections.forEach(heading => {
       const section = document.createElement('section');
       const h3 = document.createElement('h3'); h3.textContent = heading;
       const p = document.createElement('p'); p.textContent = figure.sections[heading] || 'Not recorded in the source notes.';
       section.append(h3, p); notes.append(section);
+      if (heading === 'Color & encoding') {
+        const palette = document.createElement('div'); palette.id = 'detail-palette'; palette.className = 'figure-palette';
+        palette.setAttribute('role', 'group'); palette.setAttribute('aria-label', 'Copy figure colors');
+        const caption = document.createElement('p'); caption.id = 'detail-color-caption'; caption.className = 'gallery-muted';
+        caption.textContent = 'Color samples appear when the figure finishes loading.';
+        const status = document.createElement('p'); status.id = 'detail-color-status'; status.className = 'gallery-muted';
+        status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+        section.append(palette, caption, status);
+      }
     });
     if (!publicMode && figure.pdf_reference) {
       const ref = figure.pdf_reference;
@@ -148,8 +211,7 @@
         const title = document.createElement('h3'); title.textContent = `English draft — ${ref.candidate_title}`;
         section.append(title);
       }
-      ['What the figure shows', 'Statistics & symbols', 'Color & encoding',
-        'Design lessons', 'Verification & limitations'].forEach(label => {
+      tools.sections.forEach(label => {
         const value = (ref.candidate || {})[label];
         if (!value) return;
         const h = document.createElement('h4'); h.textContent = label;
@@ -159,18 +221,13 @@
       notes.append(section);
     }
     dialog.showModal(); document.body.classList.add('gallery-modal-open');
-    dialog.scrollTop = 0; fitImage();
+    dialog.scrollTop = 0; fitImage(); updatePalette();
   }
   function render() {
-    const terms = query.value.toLocaleLowerCase('en').trim().split(/\s+/).filter(Boolean);
-    const matches = figures.filter(figure => {
-      const haystack = [figure.title, figure.paper, figure.author, figure.doi,
-        figure.journal, figure.figure, figure.year, ...figure.categories,
-        ...Object.values(figure.sections), ...(!publicMode ?
-          [figure.pdf_reference?.candidate_title, ...Object.values(figure.pdf_reference?.candidate || {})] : [])
-      ].join(' ').toLocaleLowerCase('en');
-      return (!category.value || figure.categories.includes(category.value)) && terms.every(t => haystack.includes(t));
-    });
+    const advanced = Object.fromEntries(advancedInputs.map(input => [input.dataset.searchField, input.value]));
+    const active = advancedInputs.filter(input => input.value.trim()).length;
+    text('gallery-advanced-active', active ? ` · ${active} active` : '');
+    const matches = figures.filter(figure => tools.matches(figure, query.value, category.value, advanced));
     if (sort.value === 'title') matches.sort((a, b) => a.title.localeCompare(b.title, 'en'));
     if (sort.value === 'newest') matches.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0) || a.title.localeCompare(b.title, 'en'));
     [...grid.children].forEach(card => resizeObserver?.unobserve(card));
@@ -197,8 +254,7 @@
       const label = document.createElement('span'); label.className = 'figure-category'; label.textContent = figure.primary;
       const title = document.createElement('h2'); title.textContent = figure.title;
       const source = document.createElement('p'); source.textContent = meta(figure);
-      const action = document.createElement('span'); action.className = 'figure-action'; action.textContent = 'View figure & notes →';
-      body.append(label, title, source, action); button.append(img, unavailable, body); article.append(button); grid.append(article);
+      body.append(label, title, source); button.append(img, unavailable, body); article.append(button); grid.append(article);
       resizeObserver?.observe(article);
       button.addEventListener('click', () => openFigure(figure, button));
     });
@@ -207,8 +263,11 @@
     layout();
   }
   query.addEventListener('input', render); category.addEventListener('change', render); sort.addEventListener('change', render);
+  advancedInputs.forEach(input => input.addEventListener('input', render));
   document.getElementById('gallery-reset').addEventListener('click', () => {
-    query.value = ''; category.value = ''; sort.value = 'library'; render(); query.focus();
+    query.value = ''; category.value = ''; sort.value = 'library';
+    advancedInputs.forEach(input => { input.value = ''; }); advancedPanel.open = false;
+    render(); query.focus();
   });
   document.getElementById('zoom-fit').addEventListener('click', fitImage);
   document.getElementById('zoom-actual').addEventListener('click', () => setZoom(1));
