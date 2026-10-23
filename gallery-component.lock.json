@@ -1,9 +1,9 @@
 {
-  "commit": "0ba0acbb61c6b2a0571dc534ac1315ad39845ed6",
+  "commit": "0b2c70fea804e082514312f5a35061d1066cb5ef",
   "files": {
-    "assets/css/gallery.css": "a23da9a2ce224800bef7a8b6b4769cadba828c8d22a3b99fcfef1ec37b2c6b6b",
+    "assets/css/gallery.css": "948133628ea7a3fcdf4c9c70e07761cd8776d4a54cf534bc19d074adb56f8c0c",
     "assets/js/gallery-tools.js": "939b2e01303dbb151d168c57b4a8ca731d1f9ddfbd8da4904d071e9798fccd4f",
-    "assets/js/gallery.js": "5695f97ae60526c1e5eae3c5377fa472d39b6731217d64323e8b3bc3a4dead01",
+    "assets/js/gallery.js": "251d611c077b636cc08d12ff1b5dd4512b518d47b0dadc18f53391054ae33344",
     "content/gallery/_index.md": "5c26ce6b547c9708db0beab630b444968e0e00471c1c9feb73de76bac4f80584",
     "data/gallery/allowlist.json": "df16ff3716e0232cdc47ef694c4f36cd8a15bcbb64e2541df3894b08547da252",
     "data/gallery/media.json": "dd3201b0f67c07529f407c2375fe1c2ad4995b2a706717abd457dd0f000365da",
@@ -11,7 +11,7 @@
     "gallery-component.json": "cf2c01b5474e4ac900d3e3ee7e917f609e01ffa0a77c99c0ddfc1d090339a8a2",
     "layouts/_partials/gallery/licensing.html": "81d3d3b43204ca40600cc5cb406cf0a65c12ad3aad60b94a12347bfa4fdaac92",
     "layouts/_partials/gallery/public-records.html": "b4152691094a6335f65c8f3bf164a756ab0fd72486ec56af1a6e7abb92b214d4",
-    "layouts/gallery.html": "0c8a792b9ae16badc9a1b18e860a312a99d354185129380d9dda4c3b866f39f2",
+    "layouts/gallery.html": "698372ea47d98f7c8a4fb2163cc2206fa0a6ba81f2beb4a95699e11240946aa7",
     "scripts/check_gallery_component.py": "59cc003233864c1066c3435b4289303a30c24e93840a87b3a3af3d50c22254d3",
     "scripts/public_gallery_media.py": "f32bb7ce92c9f74e9f7400d7bdd3c0cdcf7b07d9f9e129d13b81f5cfbf969546",
     "scripts/public_gallery_schema.py": "b5e557e9657478244d9d0289b858990d05ea2c638b2937f876e0b701619b1cde",
