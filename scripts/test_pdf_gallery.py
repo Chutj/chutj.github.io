@@ -81,6 +81,35 @@ class PDFReviewTest(unittest.TestCase):
         self.assertTrue(self.review(writes)['reference']['caption']['text'].startswith('Fig. 1.'))
         self.assertFalse(pdf.CAPTION.match('Fig. 1 shows a body-only reference.'))
 
+    def test_bare_caption_requires_distinct_heading_font_run(self):
+        block = dict(text='Fig. 1 Synthetic older publisher caption. a First panel.',
+            bbox=[40,100,500,140],size=8,
+            caption_heading='Fig. 1 Synthetic older publisher caption. a')
+        pages=[dict(blocks=[block])]
+        self.assertEqual(len(pdf.extract_captions(pages)['1']),1)
+        block['caption_heading']=''
+        self.assertEqual(pdf.extract_captions(pages),{})
+
+    def test_explicit_caption_beats_period_body_reference_but_duplicates_block(self):
+        def block(text):return dict(text=text,bbox=[40,100,500,140],size=8)
+        body=block('Fig. 3. Note that these are body-only observations.')
+        caption=block('Fig. 3 | Synthetic actual caption.')
+        pages=[dict(blocks=[body]),dict(blocks=[caption])]
+        result=pdf.extract_captions(pages)['3']
+        self.assertEqual(len(result),1)
+        self.assertEqual(result[0]['page'],2)
+        pages.append(dict(blocks=[caption.copy()]))
+        self.assertEqual(len(pdf.extract_captions(pages)['3']),2)
+
+    def test_caption_parser_version_refreshes_cache(self):
+        path=self.make_pdf();self.registry(path)
+        writes,_=self.build();self.persist(writes)
+        cache=next((self.output/'pdf-cache').glob('*.json'))
+        data=json.loads(cache.read_text(encoding='utf-8'))
+        data.pop('caption_parser_version')
+        cache.write_text(json.dumps(data),encoding='utf-8')
+        self.assertEqual(self.build()[1]['parsed'],1)
+
     def test_cache_dry_plan_idempotence_and_pdf_change_invalidates_rights(self):
         path=self.make_pdf();self.registry(path)
         writes,stats=self.build()

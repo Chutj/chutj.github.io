@@ -13,8 +13,10 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 VERSION = 2
+CAPTION_PARSER_VERSION = 2
 DOI = re.compile(r'10\.\d{4,9}/[-._;/:A-Za-z0-9]+', re.I)
 CAPTION = re.compile(r'^\s*(Fig(?:ure)?\.?\s*(\d+))\s*(?:[|:]|\.(?=\s))', re.I)
+BARE_CAPTION = re.compile(r'^(Fig(?:ure)?\.?\s*(\d+))\s+[A-Z][^.]{8,220}\.(?:\s*[a-z](?:,\s*[a-z])?)?$')
 
 
 def digest(value):
@@ -90,6 +92,46 @@ def license_candidate(pages):
                 conflict=len(found)>1)
 
 
+def caption_label(block):
+    text = clean(block['text'])
+    match = CAPTION.match(text)
+    if match:
+        return match, 2 if re.search(r'[|:]$', match[0]) else 0
+    # Older publisher captions have no separator. Require a short, distinct
+    # title font run ending in a period; a bare body reference is insufficient.
+    if block.get('caption_heading'):
+        match = BARE_CAPTION.match(block['caption_heading'])
+        if match:
+            return match, 1
+    return None, -1
+
+
+def extract_captions(pages):
+    captions = {}
+    strengths = {}
+    for page_number, page in enumerate(pages, 1):
+        for block in page['blocks']:
+            match, strength = caption_label(block)
+            if not match:
+                continue
+            bbox = block['bbox']
+            continuation = [b for b in page['blocks'] if b is not block
+                and b['bbox'][0] > bbox[2] and abs(b['size']-block['size']) < .7
+                and b['bbox'][1] < bbox[3] and b['bbox'][3] > bbox[1]
+                and caption_label(b)[0] is None]
+            selected = [block]+sorted(continuation, key=lambda b: b['bbox'][1])
+            text = clean('\n'.join(b['text'] for b in selected))
+            number = match[2]
+            if strength > strengths.get(number, -1):
+                captions[number] = []
+                strengths[number] = strength
+            if strength == strengths[number]:
+                captions[number].append(dict(page=page_number, figure='Figure '+number,
+                    bbox=[b['bbox'] for b in selected], text=text,
+                    sha256=digest(text.encode()), extraction_status='candidate-needs-visual-check'))
+    return captions
+
+
 def extract_pdf(path, content):
     import fitz
     with fitz.open(stream=content, filetype='pdf') as doc:
@@ -103,31 +145,23 @@ def extract_pdf(path, content):
                     continue
                 spans = [s for line in block['lines'] for s in line['spans']]
                 text = '\n'.join(''.join(s['text'] for s in line['spans']) for line in block['lines'])
+                runs = []
+                for span in spans:
+                    font = span['font'].split('+')[0]
+                    if not runs or runs[-1][0] != font:
+                        runs.append([font, span['text']])
+                    else:
+                        runs[-1][1] += span['text']
+                heading = clean(runs[0][1]) if len(runs) > 1 else ''
                 blocks.append(dict(text=text, bbox=[round(x,2) for x in block['bbox']],
-                    size=round(sum(s['size'] for s in spans)/max(1,len(spans)),2)))
+                    size=round(sum(s['size'] for s in spans)/max(1,len(spans)),2),
+                    caption_heading=heading if BARE_CAPTION.fullmatch(heading) else ''))
             pages.append(dict(blocks=blocks, links=[l['uri'] for l in page.get_links() if l.get('uri')]))
         head = ' '.join(b['text'] for p in pages[:2] for b in p['blocks'])
         identifiers = sorted({m[0].lower().rstrip('.,;)') for m in DOI.finditer(head)})
-        captions = {}
-        for page_number, page in enumerate(pages,1):
-            for block in page['blocks']:
-                match = CAPTION.match(clean(block['text']))
-                if not match:
-                    continue
-                bbox = block['bbox']
-                # Publisher captions often have a second column at the same y.
-                continuation = [b for b in page['blocks'] if b is not block
-                    and b['bbox'][0] > bbox[2] and abs(b['size']-block['size']) < .7
-                    and b['bbox'][1] < bbox[3] and b['bbox'][3] > bbox[1]
-                    and not CAPTION.match(clean(b['text']))]
-                selected = [block]+sorted(continuation,key=lambda b:b['bbox'][1])
-                text = clean('\n'.join(b['text'] for b in selected))
-                captions.setdefault(match[2],[]).append(dict(page=page_number,
-                    figure='Figure '+match[2], bbox=[b['bbox'] for b in selected],
-                    text=text, sha256=digest(text.encode()),
-                    extraction_status='candidate-needs-visual-check'))
-        return dict(parser_version=VERSION, sha256=digest(content), pages=pages,
-                    dois=identifiers, title_text=clean(head), captions=captions,
+        return dict(parser_version=VERSION, caption_parser_version=CAPTION_PARSER_VERSION,
+                    sha256=digest(content), pages=pages,
+                    dois=identifiers, title_text=clean(head), captions=extract_captions(pages),
                     article_license=license_candidate(pages))
 
 
@@ -150,7 +184,8 @@ def discover(source, output):
         cache_path = output/'pdf-cache'/f'{checksum}-v{VERSION}.json'
         try:
             cached = load(cache_path,{})
-            if cached.get('sha256') == checksum and cached.get('parser_version') == VERSION:
+            if (cached.get('sha256') == checksum and cached.get('parser_version') == VERSION
+                    and cached.get('caption_parser_version') == CAPTION_PARSER_VERSION):
                 parsed_pdf = cached; stats['reused'] += 1
             else:
                 parsed_pdf = extract_pdf(path,content); stats['parsed'] += 1
