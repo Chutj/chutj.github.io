@@ -15,13 +15,14 @@ class PublicationVariantTest(unittest.TestCase):
     def test_source_evidence_and_prepared_file_changes_require_reassessment(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);private=root/'.gallery-local';(private/'assets').mkdir(parents=True)
-            image=b'original-fixture';prepared=b'prepared-fixture'
+            image=b'original-fixture';prepared=image
             image_sha=hashlib.sha256(image).hexdigest();prepared_sha=hashlib.sha256(prepared).hexdigest()
             (private/'assets/source.png').write_bytes(image);(private/'prepared.png').write_bytes(prepared)
             source=dict(id='source',asset='gallery-private/source.png',pdf_reference={'evidence_sha256':'b'*64})
             evidence={'id':'source','assessment':'explicit test evidence only'}
             (private/'audit.json').write_text(json.dumps({'records':[evidence]}))
             record,_=fixture();record['source_image_sha256']=prepared_sha
+            source.update(primary=record['primary'],categories=record['categories'])
             record['rights']['review_evidence_sha256']=hashlib.sha256(json.dumps(evidence,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
             approval={k:record[k] for k in APPROVAL_FIELDS}
             entry=dict(record=record,asset='prepared.png',evidence_file='audit.json',evidence_id='source',bindings=[dict(id='source',image_sha256=image_sha,pdf_evidence_sha256='b'*64,catalog_sha256=hashlib.sha256(json.dumps(source,sort_keys=True,ensure_ascii=False).encode()).hexdigest())])

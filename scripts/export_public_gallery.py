@@ -33,16 +33,24 @@ def prepared_record(root, entry, approval, catalog, inventory):
         raise ValueError('Prepared record differs from explicit approval')
     if hashlib.sha256(private_file(root,entry['asset']).read_bytes()).hexdigest()!=approval['source_image_sha256']:
         raise ValueError('Prepared publication image changed')
+    if 'legend' in record:
+        legend=record['legend']
+        if hashlib.sha256(private_file(root,'supplementary/'+legend['sha256']+'.png').read_bytes()).hexdigest()!=legend['sha256']:
+            raise ValueError('Reviewed shared legend changed')
     evidence=json.loads(private_file(root,entry['evidence_file']).read_text(encoding='utf-8'))['records']
     matches=[r for r in evidence if r.get('id')==entry['evidence_id']]
     if len(matches)!=1 or hashlib.sha256(json.dumps(matches[0],sort_keys=True,ensure_ascii=False).encode()).hexdigest()!=approval['rights']['review_evidence_sha256']:
         raise ValueError('Prepared rights evidence changed')
     if not entry['bindings'] or len({b['id'] for b in entry['bindings']})!=len(entry['bindings']):
         raise ValueError('Explicit unique source bindings required')
+    if len(entry['bindings'])!=1 or entry['bindings'][0]['image_sha256']!=record['source_image_sha256']:
+        raise ValueError('Use the exact classified FIG crop, one source crop per card; complete-figure substitution is not allowed')
     for binding in entry['bindings']:
         source=catalog.get(binding['id']);raw=inventory.get(binding['id'])
         if not source or not raw:
             raise ValueError('Reviewed variant source absent from current library')
+        if record['primary']!=source['primary'] or set(record['categories'])!=set(source['categories']):
+            raise ValueError('Public categories must match this classified FIG crop, not a complete-figure category union')
         fingerprint=hashlib.sha256(json.dumps(source,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
         raw_fingerprint=hashlib.sha256(json.dumps(raw,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
         if (fingerprint!=binding['catalog_sha256'] or raw_fingerprint!=binding['inventory_sha256'] or raw.get('image_sha256')!=binding['image_sha256']
