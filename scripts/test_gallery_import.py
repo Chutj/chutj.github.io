@@ -185,6 +185,13 @@ class IncrementalGalleryTest(unittest.TestCase):
         manifest = importer.ROOT/'data/gallery/media.json'
         media = json.loads(manifest.read_text(encoding='utf-8'))['files'] if manifest.exists() else []
         expected_paths = {item['url'].removeprefix('https://chutj.github.io/') for item in media}
+        # Owner branding is separately pinned, never an exemption for figures.
+        branding = importer.ROOT/'data/site-branding.json'
+        if branding.exists():
+            for entry in json.loads(branding.read_text(encoding='utf-8'))['files']:
+                name = entry['path'].removeprefix('static/')
+                if Path(name).suffix.lower() in ('.png','.jpg','.webp'):
+                    expected_paths.add(name)
         hugo = shutil.which('hugo') or str(Path.home()/'AppData/Local/Microsoft/WinGet/Packages/Hugo.Hugo.Extended_Microsoft.Winget.Source_8wekyb3d8bbwe/hugo.exe')
         for name, extra in [('production', []), ('overlay', ['--config','hugo.toml,'+str(self.output/'hugo.toml'),'--environment','development'])]:
             target = self.base / ('build-'+name)

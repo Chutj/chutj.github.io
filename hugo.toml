@@ -11,6 +11,16 @@ mainSections = ['posts']
 description = 'A personal space for academic exploration, scientific visualization, and sharing useful research resources.'
 defaultTheme = 'auto'
 
+[params.label]
+icon = '/site-branding/site-logo.png'
+iconHeight = 30
+
+[params.assets]
+favicon = '/site-branding/favicon.ico'
+favicon16x16 = '/site-branding/favicon-16x16.png'
+favicon32x32 = '/site-branding/favicon-32x32.png'
+apple_touch_icon = '/site-branding/apple-touch-icon.png'
+
 [params.profileMode]
 enabled = true
 title = 'Welcome to My Academic Website'
