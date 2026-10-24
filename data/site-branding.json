@@ -3,23 +3,23 @@
   "files": [
     {
       "path": "static/site-branding/apple-touch-icon.png",
-      "sha256": "b52bd0fa250543dd32d8d42841bbf8658621b151ea856294abe18771488b2178"
+      "sha256": "d33cfe4ed77729e0c093ecfe6484ab3c3ec8cee8bc6837f0881f6876de24458d"
     },
     {
       "path": "static/site-branding/favicon-16x16.png",
-      "sha256": "dc025e21702954a2b8fd68996f25de0f2b94c83bf2a8cd52f0b6ebbb7b71c4d8"
+      "sha256": "f5656e204b7393bc45f17d4d36e0e6267ed42f63c32d442418d8b4ed6c37373e"
     },
     {
       "path": "static/site-branding/favicon-32x32.png",
-      "sha256": "9cbac277831c69aca761e1096ea4df530aa28d329672772b416c0f733df4fbe7"
+      "sha256": "984de2960d32a97a7c72814d0e7fc5279b8ebec56bbe328fba62554e5af8ccb1"
     },
     {
       "path": "static/site-branding/favicon.ico",
-      "sha256": "bfcbdf656083eee197082f9f1505113c9baed8d1e00559ff07ac45255c5edd67"
+      "sha256": "c5bd7a9cfd0bb63907cda8c690055432f004ee6e60c08440ea591c2562bada49"
     },
     {
       "path": "static/site-branding/site-logo.png",
-      "sha256": "5d9929c610680088adf942984afc1f2a794740accb6fb4ffeaddcf7accc4f2f9"
+      "sha256": "1a2b601856db7a4d21432432ddcc6ac40520684f35df0e55c19479de0aaafc27"
     }
   ]
 }

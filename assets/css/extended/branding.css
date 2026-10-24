@@ -1,6 +1,6 @@
-/* Personal site branding; keep the full photograph at its original ratio. */
-.logo a img{width:40px;height:30px;object-fit:contain;flex-shrink:0}
+/* Personal site branding uses a centre-cropped square, without stretching. */
+.logo a img{width:30px;height:30px;object-fit:contain;flex-shrink:0}
 @media(max-width:480px){
   .logo a{font-size:20px;column-gap:8px}
-  .logo a img{width:32px;height:24px}
+  .logo a img{width:24px;height:24px}
 }
