@@ -16,10 +16,10 @@ icon = '/site-branding/site-logo.png'
 iconHeight = 30
 
 [params.assets]
-favicon = '/site-branding/favicon.ico'
-favicon16x16 = '/site-branding/favicon-16x16.png'
-favicon32x32 = '/site-branding/favicon-32x32.png'
-apple_touch_icon = '/site-branding/apple-touch-icon.png'
+favicon = '/site-branding/favicon.ico?v=square-20261025'
+favicon16x16 = '/site-branding/favicon-16x16.png?v=square-20261025'
+favicon32x32 = '/site-branding/favicon-32x32.png?v=square-20261025'
+apple_touch_icon = '/site-branding/apple-touch-icon.png?v=square-20261025'
 
 [params.profileMode]
 enabled = true
