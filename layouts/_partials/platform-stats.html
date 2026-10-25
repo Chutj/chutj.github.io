@@ -1,0 +1,94 @@
+{{- with hugo.Data.platforms }}
+<div class="home-columns">
+    <section class="platform-stats" aria-labelledby="platform-stats-title">
+        <h2 id="platform-stats-title">Blog</h2>
+        <div class="platform-table-frame">
+            <table class="home-table platform-table">
+                <caption class="platform-visually-hidden">Followers and views across blogging platforms, rounded to the nearest thousand.</caption>
+                <thead><tr><th scope="col">Platform</th><th scope="col">Followers</th><th scope="col">Views</th></tr></thead>
+                <tbody>
+                    {{- range .platforms }}
+                    {{- $record := . }}
+                    <tr>
+                        <th scope="row">
+                            {{- if .qr_code }}
+                            <span class="platform-qr" data-platform-qr>
+                            <button class="platform-icon platform-icon-{{ .id }}" type="button" aria-label="Show {{ .name }} QR code" aria-expanded="false" aria-controls="platform-qr-{{ .id }}">
+                            {{- else if .url }}
+                            <a class="platform-icon platform-icon-{{ .id }}" href="{{ .url }}" target="_blank" rel="noopener noreferrer" title="{{ .name }}" aria-label="{{ .name }} profile (opens in a new tab)">
+                            {{- else }}
+                            <span class="platform-icon platform-icon-{{ .id }}" role="img" title="{{ .name }}" aria-label="{{ .name }}">
+                            {{- end }}
+                                <span aria-hidden="true">
+                                {{- $themeIcons := dict "wechat" "wechat" "zhihu" "zhihu" "bilibili" "bilibili" "douyin" "tiktok" }}
+                                {{- with index $themeIcons .id }}
+                                    {{- partial "svg.html" (dict "name" .) }}
+                                {{- else }}
+                                    {{- $assetName := .id }}
+                                    {{- if eq .id "baijiahao" }}{{ $assetName = "baidu" }}{{ end }}
+                                    {{- with resources.Get (printf "icons/platforms/%s.svg" $assetName) }}{{ .Content | safeHTML }}{{ end }}
+                                {{- end }}
+                                </span>
+                            {{- if .qr_code }}
+                            </button>
+                            <span class="platform-qr-popup" id="platform-qr-{{ .id }}" role="region" aria-label="{{ .name }} QR code" hidden>
+                                <a href="{{ .qr_code.url }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ .name }} QR code in a new tab">
+                                    <img src="{{ .qr_code.url }}" width="{{ .qr_code.width }}" height="{{ .qr_code.height }}" alt="QR code for the author's WeChat public account" loading="lazy" decoding="async">
+                                </a>
+                                <span class="platform-qr-caption">Scan with WeChat to follow.</span>
+                            </span>
+                            </span>
+                            {{- else if .url }}</a>{{ else }}</span>{{ end }}
+                        </th>
+                        {{- range slice (dict "label" "followers" "field" "followers") (dict "label" "views" "field" "views") }}
+                        {{- $value := index $record .field }}
+                        {{- if ne $value nil }}
+                        {{- $rounded := math.Round (div (float $value) 1000) }}
+                        <td title="{{ lang.FormatNumber 0 $value }} {{ .label }}">{{ lang.FormatNumber 0 $rounded }}k</td>
+                        {{- else }}
+                        <td><span class="platform-visually-hidden">Not provided</span></td>
+                        {{- end }}
+                        {{- end }}
+                    </tr>
+                    {{- end }}
+                </tbody>
+            </table>
+        </div>
+        <p class="home-stats-updated">
+            {{- $githubUpdated := hugo.Data.repositories.updated }}
+            {{- if eq .updated $githubUpdated }}
+            Updated <time datetime="{{ .updated }}">{{ time.Format "Jan 2, 2006" .updated }}</time>
+            {{- else }}
+            Blog updated <time datetime="{{ .updated }}">{{ time.Format "Jan 2, 2006" .updated }}</time><span aria-hidden="true"> &middot; </span>GitHub updated <time datetime="{{ $githubUpdated }}">{{ time.Format "Jan 2, 2006" $githubUpdated }}</time>
+            {{- end }}
+        </p>
+    </section>
+    <section class="home-repositories" aria-labelledby="home-repositories-title">
+        <h2 id="home-repositories-title">GitHub</h2>
+        <table class="home-table repository-table">
+            <caption class="platform-visually-hidden">Selected GitHub repositories and their public fork and star counts.</caption>
+            <thead><tr><th scope="col">Repository</th><th scope="col">Forks</th><th scope="col">Stars</th></tr></thead>
+            <tbody>
+                {{- range hugo.Data.repositories.repositories }}
+                {{- $record := . }}
+                <tr>
+                    <th scope="row"><a class="home-repository-name" href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ .name }}</a></th>
+                    {{- range slice "forks" "stars" }}
+                    {{- $value := index $record . }}
+                    {{- if ne $value nil }}
+                    <td title="{{ lang.FormatNumber 0 $value }} {{ . }}">{{ if ge $value 1000 }}{{ lang.FormatNumber 0 (math.Round (div (float $value) 1000)) }}k{{ else }}{{ lang.FormatNumber 0 $value }}{{ end }}</td>
+                    {{- else }}
+                    <td><span class="platform-visually-hidden">Not provided</span></td>
+                    {{- end }}
+                    {{- end }}
+                </tr>
+                {{- end }}
+            </tbody>
+        </table>
+    </section>
+</div>
+{{- end }}
+{{- with resources.Get "js/platform-qr.js" }}
+{{- $script := . | minify | fingerprint }}
+<script src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}" defer></script>
+{{- end }}

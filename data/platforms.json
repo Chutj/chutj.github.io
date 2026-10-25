@@ -1,0 +1,13 @@
+{
+  "updated": "2026-10-25",
+  "source": "Owner-provided platform statistics",
+  "platforms": [
+    { "id": "wechat", "name": "WeChat", "qr_code": { "url": "https://picturesali.oss-cn-beijing.aliyuncs.com/202312292218835.png", "width": 178, "height": 178 }, "followers": 32897, "views": null },
+    { "id": "xiaohongshu", "name": "Xiaohongshu", "url": "https://www.xiaohongshu.com/user/profile/5f37b62e00000000010037f0", "followers": 13854, "views": null },
+    { "id": "zhihu", "name": "Zhihu", "url": "https://www.zhihu.com/people/fkxxgis", "followers": 13952, "views": 12160000 },
+    { "id": "csdn", "name": "CSDN", "url": "https://blog.csdn.net/zhebushibiaoshifu", "followers": 34653, "views": 3274715 },
+    { "id": "baijiahao", "name": "Baijiahao", "followers": 10845, "views": 425800 },
+    { "id": "bilibili", "name": "Bilibili", "url": "https://space.bilibili.com/57253149", "followers": 934, "views": 369354 },
+    { "id": "douyin", "name": "Douyin", "followers": 1376, "views": null }
+  ]
+}
