@@ -80,6 +80,7 @@ Please follow these guidelines:
 
 - Use the shared project only for approved noncommercial research activities.
 - Coordinate large-scale or long-running computational tasks with the student project coordinator.
+- Other members' tasks may also be visible in the shared project, so confirm that a task is yours before cancelling it and do not modify or cancel anyone else's tasks.
 - Avoid unnecessary duplicate exports and excessive resource consumption.
 - Do not share project access with unauthorized individuals.
 - Do not modify or delete shared assets unless you have explicit authorization.
