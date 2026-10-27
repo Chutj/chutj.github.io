@@ -79,7 +79,7 @@ def issue(issues, code, path, detail):
 def fields_of(block):
     # Preserve arbitrary additional fields and multiline content in raw metadata.
     return {m[0].strip(): m[1].strip() for m in re.findall(
-        r'(?ms)^\*\*([^*]+)\*\*\s*[：:]\s*(.*?)(?=^\*\*[^*]+\*\*\s*[：:]|\Z)', block)}
+        r'(?ms)^\*\*([^*]+)\*\*[ \t]*(?:[：:]|\u3000)[ \t]*(.*?)(?=^\*\*[^*]+\*\*[ \t]*(?:[：:]|\u3000)|\Z)', block)}
 
 
 def canonical_figure(value):
@@ -115,6 +115,28 @@ def scan(source, labels):
                     papers[key] = value
     except (OSError, UnicodeError) as exc:
         issue(issues, 'registry_unreadable', registry.name, str(exc))
+    # New FIG batches keep paper identities in the existing PDF registry.
+    # Use explicit, unambiguous metadata only; this grants no publication rights.
+    fallback = defaultdict(list)
+    pdf_registry = source / 'PDF原文' / 'sources.json'
+    if pdf_registry.is_file():
+        try:
+            entries = load_json(pdf_registry, [])
+            for entry in entries:
+                doi = str(entry.get('doi', '')).lower()
+                title = str(entry.get('title', '')).strip()
+                author = str(entry.get('first_author', '')).strip()
+                if DOI.fullmatch(doi) and title and author:
+                    fallback[doi].append(dict(author=author, paper=title, source='https://doi.org/'+doi))
+            for doi, values in fallback.items():
+                if doi in papers:
+                    continue
+                if len({(v['author'], v['paper']) for v in values}) == 1:
+                    papers[doi] = values[0]
+                else:
+                    issue(issues, 'pdf_registry_conflict', pdf_registry.name, doi)
+        except (OSError, UnicodeError, ValueError, AttributeError) as exc:
+            issue(issues, 'pdf_registry_unreadable', pdf_registry.name, str(exc))
     folders = sorted(p for p in source.iterdir() if p.is_dir()
         and not p.name.startswith(('_', '.')) and p.name != 'PDF原文')
     images, notes = {}, defaultdict(list)
@@ -187,9 +209,9 @@ def scan(source, labels):
                                 issue(issues, 'metadata_row_missing_or_ambiguous', md.relative_to(source), image.name)
                                 continue
                             cells = table[0]
-                            row_dois = {d.lower() for d in DOI.findall(cells[1])}
+                            row_dois = {d.lower().rstrip('.,;') for d in DOI.findall(cells[1])}
                             fields = fields_of(block)
-                            paper_dois = {d.lower() for d in DOI.findall(fields.get('论文', ''))}
+                            paper_dois = {d.lower().rstrip('.,;') for d in DOI.findall(fields.get('论文', fields.get('来源', '')))}
                             if not fields or len(row_dois) != 1 or (paper_dois and paper_dois != row_dois):
                                 issue(issues, 'metadata_conflict', md.relative_to(source), image.name)
                                 continue
@@ -360,7 +382,8 @@ def run(source, output=LOCAL, dry_run=False):
             categories=[labels[v] for v in candidate['categories']],
             title=translation['title'] if reviewed else figure_label+' — '+candidate['paper'],
             journal=canonical['journal'], year=candidate['year'], doi=candidate['doi'],
-            figure=figure_label, paper=candidate['paper'], author=candidate['author'],
+            figure=figure_label, paper=candidate['paper'],
+            author=(translation.get('author') or candidate['author']) if reviewed else candidate['author'],
             source=candidate['source'], sections=sections, translation_status=translation_status,
             asset='gallery-private/'+asset_name, width=candidate['image']['width'],
             height=candidate['image']['height'], rights=rights, colors=colors)

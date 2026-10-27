@@ -10,10 +10,12 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 sys.dont_write_bytecode = True
 VERSION = 2
 CAPTION_PARSER_VERSION = 2
+LICENSE_PARSER_VERSION = 3
 DOI = re.compile(r'10\.\d{4,9}/[-._;/:A-Za-z0-9]+', re.I)
 CAPTION = re.compile(r'^\s*(Fig(?:ure)?\.?\s*(\d+))\s*(?:[|:]|\.(?=\s))', re.I)
 BARE_CAPTION = re.compile(r'^(Fig(?:ure)?\.?\s*(\d+))\s+[A-Z][^.]{8,220}\.(?:\s*[a-z](?:,\s*[a-z])?)?$')
@@ -32,7 +34,7 @@ def clean(text):
     return re.sub(r'\s+', ' ', re.sub(r'(\w)-\n(\w)', r'\1\2', text)).strip()
 
 
-def current_note_evidence(source, raw):
+def current_note_evidence(source, raw, note_cache=None):
     """Observe current selected Markdown blocks even in PDF-only refresh mode.
 
     Keep the imported Chinese snapshot intact; new evidence is additional data.
@@ -44,9 +46,14 @@ def current_note_evidence(source, raw):
         path=(source/relative).resolve()
         item=dict(path=relative,status='missing-or-unsafe')
         if path.is_relative_to(source.resolve()) and path.is_file():
-            text=path.read_text(encoding='utf-8-sig')
-            blocks=[b for b in re.split(r'(?m)^##\s+',text)[1:]
-                    if variant.get('filename') and variant['filename'] in b]
+            if note_cache is None:
+                note_cache = {}
+            if path not in note_cache:
+                text=path.read_text(encoding='utf-8-sig')
+                note_cache[path] = (text, [(b, unquote(b)) for b in re.split(r'(?m)^##\s+',text)[1:]])
+            text, indexed_blocks = note_cache[path]
+            blocks=[b for b, decoded in indexed_blocks
+                    if variant.get('filename') and variant['filename'] in decoded]
             item['status']='matched' if len(blocks)==1 else 'ambiguous-or-missing-block'
             item['sha256']=digest(blocks[0].encode('utf-8')) if len(blocks)==1 else digest(text.encode('utf-8'))
         result.append(item)
@@ -58,38 +65,40 @@ def load(path, default):
 
 
 def license_candidate(pages):
-    """Only license/copyright statements, not references to other licensed works."""
-    evidence = []
-    found = set()
+    """Separate an article's explicit grant from licenses mentioned for datasets."""
+    evidence, found, article_found = [], set(), set()
     for number, page in enumerate(pages, 1):
         for block in page['blocks']:
-            text = clean(block['text'])
-            low = text.lower()
+            text = clean(block['text']); low = text.lower()
+            compact = re.sub(r'[\s-]+', '', low)
             if re.search(r'creative\s*commons|exclusive licen[cs]e|all rights reserved|copyright|©', low):
                 evidence.append(dict(page=number, bbox=block['bbox'], text=text))
-            # PDF URL hyperlinks are evidence only on a page with a license notice.
-            if 'creative commons' in low or re.search(r'this\s*article.*(?:licen[cs]|distributed)', low):
-                compact = re.sub(r'\s+', '', low)
-                if 'noncommercial' in compact and 'noderivative' in compact and '4.0' in compact:
-                    found.add('CC BY-NC-ND 4.0')
-                elif 'noncommercial' in compact and ('4.0' in compact):
-                    found.add('CC BY-NC 4.0')
-                elif 'noderivative' in compact and '4.0' in compact:
-                    found.add('CC BY-ND 4.0')
-                elif re.search(r'attribution\s+4\.0', low):
-                    found.add('CC BY 4.0')
-            if re.search(r'exclusive licen[cs]e|all rights reserved', low):
-                found.add('Publisher exclusive license / permission required')
+            local = set()
+            if 'creativecommons' in compact and ('4.0' in compact):
+                nc = 'noncommercial' in compact
+                if 'noderivative' in compact:
+                    local.add('CC BY-NC-ND 4.0' if nc else 'CC BY-ND 4.0')
+                elif 'sharealike' in compact:
+                    local.add('CC BY-NC-SA 4.0' if nc else 'CC BY-SA 4.0')
+                elif nc:
+                    local.add('CC BY-NC 4.0')
+                elif 'attribution' in compact:
+                    local.add('CC BY 4.0')
+            if re.search(r'exclusive licen[cs]e(?!e\b)|all rights reserved', low):
+                local.add('Publisher exclusive license / permission required')
+            found.update(local)
+            if re.search(r'this\s+(?:is\s+an?\s+open.access\s+article|article\s+(?:is\s+)?(?:licensed|distributed|published))',low) or ('copyright' in low and 'distributed under' in low and 'creativecommons' in compact):
+                article_found.update(local)
         text = clean(' '.join(b['text'] for b in page['blocks']))
         if 'creative' in text.lower() and 'commons' in text.lower():
             for url in page['links']:
-                match = re.search(r'creativecommons.org/licenses/(by(?:-nc)?(?:-nd)?)/4.0', url, re.I)
+                match = re.search(r'creativecommons.org/licenses/(by(?:-nc)?(?:-nd|-sa)?)/4.0', url, re.I)
                 if match:
                     found.add('CC '+match[1].upper()+' 4.0')
-                    evidence.append(dict(page=number, url=url, text='License hyperlink on PDF page; verify the nearby article notice.'))
-    return dict(candidate=next(iter(found)) if len(found)==1 else 'unverified',
-                detected=sorted(found), evidence=evidence,
-                conflict=len(found)>1)
+                    evidence.append(dict(page=number,url=url,text='License hyperlink on PDF page; verify the nearby article notice.'))
+    selected = article_found or found
+    return dict(candidate=next(iter(selected)) if len(selected)==1 else 'unverified',
+                detected=sorted(selected), evidence=evidence, conflict=len(selected)>1)
 
 
 def caption_label(block):
@@ -160,9 +169,26 @@ def extract_pdf(path, content):
         head = ' '.join(b['text'] for p in pages[:2] for b in p['blocks'])
         identifiers = sorted({m[0].lower().rstrip('.,;)') for m in DOI.finditer(head)})
         return dict(parser_version=VERSION, caption_parser_version=CAPTION_PARSER_VERSION,
+                    license_parser_version=LICENSE_PARSER_VERSION,
                     sha256=digest(content), pages=pages,
-                    dois=identifiers, title_text=clean(head), captions=extract_captions(pages),
+                    dois=identifiers, document_dois=document_identifiers(pages), title_text=clean(head), captions=extract_captions(pages),
                     article_license=license_candidate(pages))
+
+
+def registered_pdf_match(doi, name, pdf, entry, expected):
+    if doi in pdf['dois'] and (name == expected or pdf['sha256'] == entry.get('sha256')):
+        return True
+    # Some journal PDFs print the DOI only on the final page. Require BOTH the
+    # exact registered path and bytes, then the DOI in this document. The build
+    # separately cross-checks the title; a reference-list DOI alone is not enough.
+    return (name == expected and pdf['sha256'] == entry.get('sha256')
+            and doi in pdf.get('document_dois', []))
+
+
+def document_identifiers(pages):
+    text = ' '.join(b['text'] for p in pages for b in p['blocks'])
+    text += ' ' + ' '.join(url for p in pages for url in p['links'])
+    return sorted({m[0].lower().rstrip('.,;)') for m in DOI.finditer(text)})
 
 
 def discover(source, output):
@@ -186,6 +212,16 @@ def discover(source, output):
             cached = load(cache_path,{})
             if (cached.get('sha256') == checksum and cached.get('parser_version') == VERSION
                     and cached.get('caption_parser_version') == CAPTION_PARSER_VERSION):
+                upgraded = False
+                if cached.get('license_parser_version') != LICENSE_PARSER_VERSION:
+                    cached['article_license'] = license_candidate(cached['pages'])
+                    cached['license_parser_version'] = LICENSE_PARSER_VERSION
+                    upgraded = True
+                if 'document_dois' not in cached:
+                    cached['document_dois'] = document_identifiers(cached['pages'])
+                    upgraded = True
+                if upgraded:
+                    writes[cache_path] = encoded(cached)
                 parsed_pdf = cached; stats['reused'] += 1
             else:
                 parsed_pdf = extract_pdf(path,content); stats['parsed'] += 1
@@ -205,7 +241,7 @@ def discover(source, output):
             diagnostics.append(dict(code='invalid_pdf_registry_path',detail=doi))
             continue
         options = [(name,p) for name,p in parsed.items()
-            if doi in p['dois'] and (name == expected or p['sha256']==entry.get('sha256'))]
+            if registered_pdf_match(doi,name,p,entry,expected)]
         # New PDF versions with changed hashes can match a registry DOI + title,
         # but multiple different contents remain ambiguous rather than auto-chosen.
         if not options:
@@ -241,6 +277,7 @@ def build(source, output, catalog, inventory, state):
     official=load(output/'official-evidence.json',{})
     old_review=load(output/'pdf-review.json',{}).get('figures',{})
     papers,figures={},{}
+    note_cache={}
     catalog=copy.deepcopy(catalog); inventory=copy.deepcopy(inventory); state=copy.deepcopy(state)
     raw_by_id={r['id']:r for r in inventory['records']}
     for record in catalog['records']:
@@ -290,7 +327,7 @@ def build(source, output, catalog, inventory, state):
         if 'NC' in article_license['candidate']:
             unresolved.append('NonCommercial: confirm the intended site/use is eligible; academic context alone is insufficient.')
         note_hashes=[v.get('note_sha256') for v in raw.get('variants',[])]
-        current_notes=current_note_evidence(source,raw)
+        current_notes=current_note_evidence(source,raw,note_cache)
         raw['current_note_evidence']=current_notes
         if any(n['status']!='matched' for n in current_notes):
             unresolved.append('Current source Markdown block missing or ambiguous; compare the retained imported notes before review.')
@@ -386,9 +423,13 @@ def verify_sources(source,writes,output):
     for paper in review['papers'].values():
         if paper['pdf_source'] and digest((source/paper['pdf_source']).read_bytes())!=paper['pdf_sha256']:
             raise RuntimeError('Source PDF changed during extraction; existing local snapshot preserved')
+    verification_notes = {}
     for record in json.loads(writes[output/'inventory.json'])['records']:
-        if current_note_evidence(source,record)!=record.get('current_note_evidence'):
+        if current_note_evidence(source,record,verification_notes)!=record.get('current_note_evidence'):
             raise RuntimeError('Source Markdown changed during extraction; rerun after FIG finishes writing')
+    for path, (text, _) in verification_notes.items():
+        if path.read_text(encoding='utf-8-sig') != text:
+            raise RuntimeError('Source Markdown changed during verification; existing local snapshot preserved')
 
 
 def run(source,output,dry_run=False):
