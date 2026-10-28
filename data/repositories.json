@@ -1,12 +1,12 @@
 {
-  "updated": "2026-10-25",
-  "source": "https://api.github.com/repos/Chutj/sci-figure-gallery",
+  "updated": "2026-10-28",
+  "source": "Owner-provided GitHub repository statistics",
   "repositories": [
     {
       "name": "SCI Figure Gallery",
       "url": "https://github.com/Chutj/sci-figure-gallery",
-      "forks": 0,
-      "stars": 0
+      "forks": 1,
+      "stars": 12
     }
   ]
 }

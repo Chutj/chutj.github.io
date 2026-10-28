@@ -11,6 +11,11 @@ mainSections = ['posts']
 description = 'A personal space for academic exploration, scientific visualization, and sharing useful research resources.'
 defaultTheme = 'auto'
 
+# Public beacon identifier only. The private API credential belongs in Secrets.
+[params.webAnalytics]
+enabled = false
+beaconToken = ''
+
 [params.label]
 icon = '/site-branding/site-logo.png'
 iconHeight = 30

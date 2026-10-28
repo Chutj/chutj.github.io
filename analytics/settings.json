@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "hostname": "chutj.github.io",
+  "timezone": "Asia/Shanghai",
+  "start_date": null,
+  "refresh_days": 3,
+  "pages": {
+    "home": "/",
+    "gallery": "/gallery/",
+    "gee_access": "/gee-access/"
+  }
+}

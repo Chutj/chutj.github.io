@@ -7,6 +7,9 @@
 # Private FIG preview inputs, copied images, translations and build output
 /.gallery-local/
 
+# Disposable analytics previews, test fixtures and local diagnostics
+/.analytics-local/
+
 # Local Python importer/test caches
 __pycache__/
 *.py[cod]

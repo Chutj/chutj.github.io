@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - analytics/history.json
   workflow_dispatch:
+  schedule:
+    # Monthly public snapshot; daily archiving has a separate lightweight job.
+    - cron: '23 2 1 * *'
 
 env:
   HUGO_VERSION: '0.168.0'
@@ -23,6 +28,7 @@ defaults:
 
 jobs:
   build:
+    if: github.event_name != 'schedule' || vars.ANALYTICS_ENABLED == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,6 +44,10 @@ jobs:
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v6
+
+      - name: Prepare the last completed month's cumulative analytics snapshot
+        if: vars.ANALYTICS_ENABLED == 'true'
+        run: python3 scripts/archive_web_analytics.py snapshot --write
 
       - name: Install Hugo Extended
         run: |
@@ -59,6 +69,10 @@ jobs:
         run: |
           hugo version
           hugo build --minify --baseURL "${PAGES_BASE_URL}/" --destination public
+
+      - name: Export the aggregate public snapshot for the future dashboard
+        if: vars.ANALYTICS_ENABLED == 'true'
+        run: cp data/site-analytics.json public/site-analytics.json
 
       - name: Check published output for private Gallery paths
         run: python3 scripts/validate_public_gallery.py --output public

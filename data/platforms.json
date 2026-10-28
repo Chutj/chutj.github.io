@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-25",
+  "updated": "2026-10-28",
   "source": "Owner-provided platform statistics",
   "platforms": [
     { "id": "wechat", "name": "WeChat", "qr_code": { "url": "https://picturesali.oss-cn-beijing.aliyuncs.com/202312292218835.png", "width": 178, "height": 178 }, "followers": 32897, "views": null },

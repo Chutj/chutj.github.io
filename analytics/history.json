@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source": "cloudflare-web-analytics",
+  "metric": "page_views",
+  "hostname": "chutj.github.io",
+  "timezone": "Asia/Shanghai",
+  "start_date": null,
+  "site_binding_sha256": null,
+  "days": []
+}

@@ -1,0 +1,76 @@
+name: Archive website page views
+
+on:
+  schedule:
+    # 08:43 Asia/Shanghai, away from the top of the hour.
+    - cron: '43 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only show the offline archive plan; do not call Cloudflare or save data'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-analytics-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    if: vars.ANALYTICS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout only analytics files, without Gallery media or theme
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          sparse-checkout: |
+            /analytics/
+            /scripts/archive_web_analytics.py
+            /hugo.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Archive completed days, or inspect the plan
+        env:
+          CF_ANALYTICS_ACCOUNT_ID: ${{ vars.CF_ANALYTICS_ACCOUNT_ID }}
+          CF_ANALYTICS_SITE_TAG: ${{ vars.CF_ANALYTICS_SITE_TAG }}
+          CF_ANALYTICS_API_TOKEN: ${{ secrets.CF_ANALYTICS_API_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        shell: bash
+        run: |
+          args=(archive)
+          if [[ "${EVENT_NAME}" != "workflow_dispatch" || "${DRY_RUN}" != "true" ]]; then
+            args+=(--write)
+          fi
+          python3 scripts/archive_web_analytics.py "${args[@]}"
+
+      - name: Save only aggregate history; do not rebuild the website
+        if: github.event_name == 'schedule' || inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- analytics/history.json
+          if git diff --cached --quiet; then
+            echo "No aggregate changes to save."
+            exit 0
+          fi
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Archive daily website page views'
+          # Supply the short-lived token only to this push. Never save it in Git.
+          auth=$(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)
+          echo "::add-mask::${auth}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push origin HEAD:main
+          # GITHUB_TOKEN pushes do not trigger the Pages workflow. The monthly
+          # schedule there publishes snapshots independently; no daily 1 GB build.

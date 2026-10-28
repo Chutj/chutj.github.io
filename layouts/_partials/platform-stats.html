@@ -55,12 +55,11 @@
             </table>
         </div>
         <p class="home-stats-updated">
-            {{- $githubUpdated := hugo.Data.repositories.updated }}
-            {{- if eq .updated $githubUpdated }}
-            Updated <time datetime="{{ .updated }}">{{ time.Format "Jan 2, 2006" .updated }}</time>
-            {{- else }}
-            Blog updated <time datetime="{{ .updated }}">{{ time.Format "Jan 2, 2006" .updated }}</time><span aria-hidden="true"> &middot; </span>GitHub updated <time datetime="{{ $githubUpdated }}">{{ time.Format "Jan 2, 2006" $githubUpdated }}</time>
+            {{- $updated := .updated }}
+            {{- with hugo.Data.repositories.updated }}
+                {{- if gt . $updated }}{{ $updated = . }}{{ end }}
             {{- end }}
+            Updated <time datetime="{{ $updated }}">{{ time.Format "January 2, 2006" $updated }}</time>
         </p>
     </section>
     <section class="home-repositories" aria-labelledby="home-repositories-title">
@@ -73,10 +72,10 @@
                 {{- $record := . }}
                 <tr>
                     <th scope="row"><a class="home-repository-name" href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ .name }}</a></th>
-                    {{- range slice "forks" "stars" }}
-                    {{- $value := index $record . }}
+                    {{- range slice (dict "field" "forks" "label" "Forks") (dict "field" "stars" "label" "Stars") }}
+                    {{- $value := index $record .field }}
                     {{- if ne $value nil }}
-                    <td title="{{ lang.FormatNumber 0 $value }} {{ . }}">{{ if ge $value 1000 }}{{ lang.FormatNumber 0 (math.Round (div (float $value) 1000)) }}k{{ else }}{{ lang.FormatNumber 0 $value }}{{ end }}</td>
+                    <td title="{{ .label }}: {{ lang.FormatNumber 0 $value }}">{{ if ge $value 1000 }}{{ lang.FormatNumber 0 (math.Round (div (float $value) 1000)) }}k{{ else }}{{ lang.FormatNumber 0 $value }}{{ end }}</td>
                     {{- else }}
                     <td><span class="platform-visually-hidden">Not provided</span></td>
                     {{- end }}
