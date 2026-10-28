@@ -13,8 +13,8 @@ defaultTheme = 'auto'
 
 # Public beacon identifier only. The private API credential belongs in Secrets.
 [params.webAnalytics]
-enabled = false
-beaconToken = ''
+enabled = true
+beaconToken = '97758f6c5beb44789c57636d57d61a51'
 
 [params.label]
 icon = '/site-branding/site-logo.png'
