@@ -50,10 +50,14 @@ def current_note_evidence(source, raw, note_cache=None):
                 note_cache = {}
             if path not in note_cache:
                 text=path.read_text(encoding='utf-8-sig')
-                note_cache[path] = (text, [(b, unquote(b)) for b in re.split(r'(?m)^##\s+',text)[1:]])
+                # Bind the note that embeds this image, not another section
+                # that merely links to it as related material.
+                from import_gallery import MARKDOWN_IMAGE
+                note_cache[path] = (text, [(b, {unquote(link).strip('<>').split('#',1)[0].rsplit('/',1)[-1]
+                    for link in MARKDOWN_IMAGE.findall(b)}) for b in re.split(r'(?m)^##\s+',text)[1:]])
             text, indexed_blocks = note_cache[path]
-            blocks=[b for b, decoded in indexed_blocks
-                    if variant.get('filename') and variant['filename'] in decoded]
+            blocks=[b for b, embedded_files in indexed_blocks
+                    if variant.get('filename') and variant['filename'] in embedded_files]
             item['status']='matched' if len(blocks)==1 else 'ambiguous-or-missing-block'
             item['sha256']=digest(blocks[0].encode('utf-8')) if len(blocks)==1 else digest(text.encode('utf-8'))
         result.append(item)
@@ -440,6 +444,14 @@ def run(source,output,dry_run=False):
     if not all('records' in v for v in (catalog,inventory,state)):
         raise ValueError('Import local FIG records before PDF enrichment')
     writes,stats=build(source,output,catalog,inventory,state)
+    # PDF-only refreshes must use the importer's final enriched fingerprint too;
+    # otherwise the next unchanged import reports a spurious metadata update.
+    enriched=json.loads(writes[output/'catalog.json'])['records']
+    raw_by_id={r['id']:r for r in json.loads(writes[output/'inventory.json'])['records']}
+    enriched_state=json.loads(writes[output/'state.json'])
+    for record in enriched:
+        enriched_state['records'][record['id']]['fingerprint']=digest(encoded(dict(raw=raw_by_id[record['id']],display=record)))
+    writes[output/'state.json']=encoded(enriched_state)
     overlay=OVERLAY.replace("source = '.gallery-local/assets'",'source = '+json.dumps((output/'assets').relative_to(ROOT).as_posix())).replace("galleryCatalog = '.gallery-local/catalog.json'",'galleryCatalog = '+json.dumps((output/'catalog.json').relative_to(ROOT).as_posix())).replace('CATALOG_REVISION',digest(writes[output/'catalog.json']))
     writes[output/'hugo.toml']=overlay.encode()
     changed={str(p.relative_to(ROOT)):'update' if p.exists() else 'create' for p,b in writes.items() if not p.exists() or p.read_bytes()!=b}

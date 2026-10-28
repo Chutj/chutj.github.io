@@ -19,6 +19,9 @@ LOCAL = ROOT / '.gallery-local'
 DEFAULT_SOURCE = Path.home() / 'WorkBuddy/LiteraturePush/绘图参考'
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.tif', '.tiff', '.bmp', '.svg', '.avif', '.heic'}
 DOI = re.compile(r'10\.\d{4,9}/[-._;/:A-Za-z0-9]+')
+# FIG notes sometimes include bracketed panel descriptions in image alt text.
+# Permit those labels without changing how relative destinations are validated.
+MARKDOWN_IMAGE = re.compile(r'!\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\(([^)]+)\)')
 CJK = re.compile(r'[\u3400-\u9fff]')
 FIELD_ALIASES = {
     'What the figure shows': ['表示什么'],
@@ -190,10 +193,10 @@ def scan(source, labels):
                         except ValueError as exc:
                             issue(issues, 'unsafe_image_path', md.relative_to(source), str(exc))
                 blocks = re.split(r'(?m)^##\s+', body)[1:]
-                if not blocks and (rows or re.search(r'!\[[^]]*\]\(', body)):
+                if not blocks and (rows or MARKDOWN_IMAGE.search(body)):
                     issue(issues, 'unparsed_markdown', md.relative_to(source), 'No per-figure level-two sections')
                 for block in blocks:
-                    embedded = re.findall(r'!\[[^]]*\]\(([^)]+)\)', block)
+                    embedded = MARKDOWN_IMAGE.findall(block)
                     if not embedded:
                         continue
                     for link in embedded:

@@ -67,6 +67,13 @@ def plan(root=ROOT):
     approvals=validate_policy(policy)
     if not approvals:
         return {'schema_version':1,'records':[]},[]
+    def validate_one(record):
+        # The entire policy was validated above and is checked again with the
+        # complete dataset below. Avoid revalidating every other approval for
+        # each individual record in large libraries.
+        validate_dataset({'schema_version':1,'records':[record]},
+            dict(schema_version=1,image_hosts=policy['image_hosts'],
+                 approved_records=[approvals[record['id']]]))
     local=root/'.gallery-local'
     catalog=json.loads((local/'catalog.json').read_text(encoding='utf-8-sig'))['records']
     inventory={r['id']:r for r in json.loads((local/'inventory.json').read_text(encoding='utf-8-sig'))['records']}
@@ -83,7 +90,7 @@ def plan(root=ROOT):
         if uid not in approvals:continue
         try:
             public=prepared_record(root,entry,approvals[uid],catalog_by_id,inventory)
-            validate_dataset({'schema_version':1,'records':[public]},policy)
+            validate_one(public)
             records.append(public)
         except (ValueError,KeyError,OSError) as exc:
             rejected.append(dict(id=uid,reason=str(exc)))
@@ -102,7 +109,7 @@ def plan(root=ROOT):
         public=editor_payload(record)
         public.update({k:approval[k] for k in APPROVAL_FIELDS})
         try:
-            validate_dataset({'schema_version':1,'records':[public]},policy)
+            validate_one(public)
             records.append(public)
         except ValueError as exc:
             rejected.append(dict(id=uid,reason=str(exc)))

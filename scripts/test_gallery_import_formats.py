@@ -48,6 +48,31 @@ class FigureNoteFormatsTest(unittest.TestCase):
             self.assertEqual(records,[])
             self.assertTrue(any(x['code']=='metadata_conflict' for x in issues))
 
+    def test_bracketed_panel_alt_text_imports_once_and_preserves_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source,folder,_=self.fixture(directory)
+            path=folder/'Maps.md'
+            path.write_text(path.read_text(encoding='utf-8').replace(
+                '![Example]', '![Fig. 1 [a-c] / color key]'), encoding='utf-8')
+            before=path.read_bytes()
+            records,issues,_=importer.scan(source, {'Maps':'Maps'})
+            self.assertEqual(len(records),1,issues)
+            self.assertEqual(len(records[0]['variants']),1)
+            self.assertEqual(path.read_bytes(),before)
+            self.assertNotIn('rights',records[0])
+
+    def test_bracketed_alt_text_still_rejects_escaping_destination(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source,folder,_=self.fixture(directory)
+            path=folder/'Maps.md'
+            text=path.read_text(encoding='utf-8')
+            text=text.replace('![Example](N_2026_Example_Fig1_a.png)',
+                '![Fig. 1 [a]](../../outside.png)')
+            path.write_text(text,encoding='utf-8')
+            records,issues,_=importer.scan(source, {'Maps':'Maps'})
+            self.assertEqual(records,[])
+            self.assertTrue(any(x['code']=='unsafe_image_path' for x in issues))
+
     def test_reviewed_authors_survive_repeat_import_without_recopying(self):
         parent=importer.LOCAL/'tests';parent.mkdir(parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(dir=parent) as directory:
@@ -76,8 +101,46 @@ class FigureNoteFormatsTest(unittest.TestCase):
             self.assertEqual(records,[])
             self.assertTrue(any(x['code']=='pdf_registry_conflict' for x in issues))
 
+    def test_pdf_only_refresh_does_not_create_a_phantom_import_update(self):
+        import pdf_gallery
+        parent=importer.LOCAL/'tests';parent.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=parent) as directory:
+            base=Path(directory);source=base/'source';source.mkdir()
+            _,folder,_=self.fixture(source)
+            output=base/'output';output.mkdir()
+            (output/'category-labels.json').write_text(json.dumps({'Maps':'Maps'}),encoding='utf-8')
+            importer.run(source,output)
+            path=folder/'Maps.md';path.write_text(path.read_text(encoding='utf-8')+'\n\n',encoding='utf-8')
+            pdf_gallery.run(source,output)
+            repeat=importer.run(source,output,True)
+            self.assertEqual(repeat['summary']['updated'],0)
+            self.assertEqual(repeat['summary']['images_to_copy'],0)
+
 
 class EncodedNoteEvidenceTest(unittest.TestCase):
+    def test_related_links_do_not_bind_an_unrelated_description(self):
+        import hashlib
+        import pdf_gallery
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory);filename='Example_Fig1_a.png'
+            block='Example\n\n![Fig. 1 [a]]('+filename+')\n'
+            other='\n## Another figure\n\n![other](Other_Fig2_b.png)\n[Related figure]('+filename+')\n'
+            path=source/'notes.md';path.write_text('## '+block+other,encoding='utf-8')
+            raw={'variants':[{'path':'notes.md','filename':filename}]}
+            first=pdf_gallery.current_note_evidence(source,raw)
+            self.assertEqual(first[0]['status'],'matched')
+            self.assertEqual(first[0]['sha256'],hashlib.sha256((block+'\n').encode()).hexdigest())
+            path.write_text(path.read_text(encoding='utf-8')+'\n## Unrelated appendix\nMore notes.\n',encoding='utf-8')
+            self.assertEqual(pdf_gallery.current_note_evidence(source,raw),first)
+
+    def test_two_actual_embeddings_remain_ambiguous(self):
+        import pdf_gallery
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory);filename='Example_Fig1_a.png'
+            (source/'notes.md').write_text('## First\n![a]('+filename+')\n## Second\n![a]('+filename+')\n',encoding='utf-8')
+            evidence=pdf_gallery.current_note_evidence(source,{'variants':[{'path':'notes.md','filename':filename}]})
+            self.assertEqual(evidence[0]['status'],'ambiguous-or-missing-block')
+
     def test_percent_encoded_image_name_matches_original_block_without_changing_its_hash(self):
         from urllib.parse import quote
         import hashlib
