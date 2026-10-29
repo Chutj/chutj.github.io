@@ -1,10 +1,32 @@
 {
-  "schema_version": 1,
-  "source": "cloudflare-web-analytics",
-  "metric": "page_views",
+  "days": [
+    {
+      "countries": {
+        "CN": 24,
+        "FI": 2,
+        "HK": 2,
+        "JP": 3,
+        "NL": 2,
+        "SG": 5,
+        "TW": 4,
+        "US": 15
+      },
+      "date": "2026-10-28",
+      "page_views": 57,
+      "pages": {
+        "gallery": 42,
+        "gee_access": 8,
+        "home": 7
+      },
+      "retrieved_at": "2026-10-29T20:46:45.450708+08:00",
+      "sample_interval": 1
+    }
+  ],
   "hostname": "chutj.github.io",
-  "timezone": "Asia/Shanghai",
-  "start_date": null,
-  "site_binding_sha256": null,
-  "days": []
+  "metric": "page_views",
+  "schema_version": 1,
+  "site_binding_sha256": "c46ea5f091cec3a8168e4b074f96b95630cb3d923577f53d4de03709f856d8a2",
+  "source": "cloudflare-web-analytics",
+  "start_date": "2026-10-28",
+  "timezone": "Asia/Shanghai"
 }
