@@ -121,12 +121,16 @@ def scan(source, labels):
     # New FIG batches keep paper identities in the existing PDF registry.
     # Use explicit, unambiguous metadata only; this grants no publication rights.
     fallback = defaultdict(list)
+    pdf_journals = defaultdict(set)
     pdf_registry = source / 'PDF原文' / 'sources.json'
     if pdf_registry.is_file():
         try:
             entries = load_json(pdf_registry, [])
             for entry in entries:
                 doi = str(entry.get('doi', '')).lower()
+                journal = str(entry.get('journal', '')).strip()
+                if DOI.fullmatch(doi) and journal:
+                    pdf_journals[doi].add(journal)
                 title = str(entry.get('title', '')).strip()
                 author = str(entry.get('first_author', '')).strip()
                 if DOI.fullmatch(doi) and title and author:
@@ -208,12 +212,37 @@ def scan(source, labels):
                                 issue(issues, 'unavailable_image' if image.exists() else 'missing_image', md.relative_to(source), unquote(link))
                                 continue
                             table = rows.get(image, [])
+                            fields = fields_of(block)
+                            if not table:
+                                # New FIG notes keep explicit source/selection fields
+                                # without repeating an index table. Accept only when
+                                # the DOI, journal and figure are independently bound.
+                                paper_dois = {d.lower().rstrip('.,;') for d in DOI.findall(fields.get('论文', fields.get('来源', '')))}
+                                selection = fields.get('图号与选区', '')
+                                number = re.search(r'\b(?:Fig\.?|Figure)\s*(\d+)\b', selection, re.I)
+                                heading = block.splitlines()[0].split('·', 1)[0].strip()
+                                label = re.fullmatch(r'(?:Fig\.?|Figure)\s*(\d+)(?:\s+(.+))?', heading, re.I)
+                                panel = re.search(r'(?:panel(?:/选区)?|选区)\s*[：:]\s*([^。；;\n]+)', selection, re.I)
+                                normalize_panel = lambda value: re.sub(r'\s+', '', value).replace('–','-').replace('—','-').casefold()
+                                if (len(paper_dois) != 1 or not number or not label or number[1] != label[1]
+                                        or not panel or normalize_panel(panel[1]) != normalize_panel(label[2] or '')):
+                                    issue(issues, 'metadata_row_missing_or_ambiguous', md.relative_to(source), image.name)
+                                    continue
+                                doi = next(iter(paper_dois))
+                                journals = pdf_journals.get(doi, set())
+                                if doi not in papers or papers[doi] is None or len(journals) != 1:
+                                    issue(issues, 'paper_source_missing_or_conflicting', md.relative_to(source), image.name)
+                                    continue
+                                journal = next(iter(journals))
+                                if journal.casefold() not in fields.get('论文', fields.get('来源', '')).casefold():
+                                    issue(issues, 'metadata_conflict', md.relative_to(source), image.name)
+                                    continue
+                                table = [[heading, journal+' · '+doi, heading, link]]
                             if len(table) != 1:
                                 issue(issues, 'metadata_row_missing_or_ambiguous', md.relative_to(source), image.name)
                                 continue
                             cells = table[0]
                             row_dois = {d.lower().rstrip('.,;') for d in DOI.findall(cells[1])}
-                            fields = fields_of(block)
                             paper_dois = {d.lower().rstrip('.,;') for d in DOI.findall(fields.get('论文', fields.get('来源', '')))}
                             if not fields or len(row_dois) != 1 or (paper_dois and paper_dois != row_dois):
                                 issue(issues, 'metadata_conflict', md.relative_to(source), image.name)

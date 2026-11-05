@@ -48,6 +48,44 @@ class FigureNoteFormatsTest(unittest.TestCase):
             self.assertEqual(records,[])
             self.assertTrue(any(x['code']=='metadata_conflict' for x in issues))
 
+    def tableless_fixture(self, directory):
+        source, folder, registry = self.fixture(directory)
+        registry[0]['journal'] = 'Nature'
+        (source/'PDF原文/sources.json').write_text(json.dumps(registry), encoding='utf-8')
+        path = folder/'Maps.md'
+        path.write_text('## Fig.1 a · Example paper\n\n'
+            '![panel](N_2026_Example_Fig1_a.png)\n\n'
+            '**来源**：Example paper; Nature; DOI: 10.1234/example.\n\n'
+            '**图号与选区**：Figure 1；panel：a。\n\n'
+            '**表示什么**：Synthetic fixture only.\n', encoding='utf-8')
+        return source, path
+
+    def test_tableless_explicit_source_and_figure_match_registry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, path = self.tableless_fixture(directory)
+            before = path.read_bytes()
+            records, issues, _ = importer.scan(source, {'Maps':'Maps'})
+            self.assertEqual(len(records), 1, issues)
+            self.assertEqual(records[0]['variants'][0]['figure'], 'Fig.1 a')
+            self.assertEqual(path.read_bytes(), before)
+            self.assertNotIn('rights', records[0])
+
+    def test_tableless_number_or_doi_mismatch_is_quarantined(self):
+        for old, new in [('Figure 1', 'Figure 2'), ('panel：a', 'panel：b'), ('10.1234/example.', '10.1234/unlisted.')]:
+            with self.subTest(new=new), tempfile.TemporaryDirectory() as directory:
+                source, path = self.tableless_fixture(directory)
+                path.write_text(path.read_text(encoding='utf-8').replace(old,new), encoding='utf-8')
+                records, _, _ = importer.scan(source, {'Maps':'Maps'})
+                self.assertEqual(records, [])
+
+    def test_tableless_journal_disagreement_is_quarantined(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, path = self.tableless_fixture(directory)
+            path.write_text(path.read_text(encoding='utf-8').replace('; Nature;', '; Science;'), encoding='utf-8')
+            records, issues, _ = importer.scan(source, {'Maps':'Maps'})
+            self.assertEqual(records, [])
+            self.assertTrue(any(x['code']=='metadata_conflict' for x in issues))
+
     def test_bracketed_panel_alt_text_imports_once_and_preserves_source(self):
         with tempfile.TemporaryDirectory() as directory:
             source,folder,_=self.fixture(directory)
