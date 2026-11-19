@@ -1,13 +1,13 @@
 {
-  "commit": "26531badbb004ae4c89b92c21592666e78b893d9",
+  "commit": "b744b004cfe8ea240915b4642165dee547af4d6e",
   "files": {
     "assets/css/gallery.css": "e9ca4868df1a260c3c4411003d19748465e2d8601fe307eb7bcbe60f2cf9aa56",
     "assets/js/gallery-tools.js": "ab7ff3c407c767c107def901562bec232a6dc9f52fd9af0fd5b1318e49564514",
     "assets/js/gallery.js": "ee2c26f67bd73344fce095789cc65b79d214041bc998549448320b1c202f648e",
     "content/gallery/_index.md": "5c26ce6b547c9708db0beab630b444968e0e00471c1c9feb73de76bac4f80584",
-    "data/gallery/allowlist.json": "27fec28f880ef926f4789992f5e56b40e046d85830611f63b45e22c77e63ab62",
+    "data/gallery/allowlist.json": "655ef380c7a28871d6b63a4a9113ba9d453a68cad94b5bbb37cf749121b49b31",
     "data/gallery/media.json": "acef2ce5ffd1349cc88f700535534d90102e15a42b727e60c8384c74a6f63655",
-    "data/gallery/public.json": "0b08dbd2305b0f6c7ddddf4ff363b920c0c825a0a5e1f29c352640284dcf3f77",
+    "data/gallery/public.json": "c3ca9ff7b998ce7081222b2f6475b14b23d206d9f5e235c8d80a53268cb7083e",
     "data/gallery/title_labels.json": "c1332635709e552467774dde65b987d26afc6db5a292f16795132c4c9b1b60ff",
     "gallery-component.json": "4142177d219b4575698b187b1520b9678b1a5481a10899f655be429b85fc17f8",
     "layouts/_partials/gallery/licensing.html": "96e17ffff14154d81215cf703318e69fdb5e3df9c68bb4ed480452ebe836d257",
