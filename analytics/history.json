@@ -616,6 +616,30 @@
       },
       "retrieved_at": "2026-11-23T16:14:35.767490+08:00",
       "sample_interval": 1
+    },
+    {
+      "countries": {
+        "CN": 155,
+        "DK": 16,
+        "FR": 1,
+        "GB": 37,
+        "HK": 16,
+        "JP": 35,
+        "KR": 5,
+        "NL": 12,
+        "SG": 44,
+        "TW": 8,
+        "US": 121
+      },
+      "date": "2026-11-23",
+      "page_views": 450,
+      "pages": {
+        "gallery": 429,
+        "gee_access": 5,
+        "home": 15
+      },
+      "retrieved_at": "2026-11-24T18:26:15.246371+08:00",
+      "sample_interval": 1
     }
   ],
   "hostname": "chutj.github.io",
