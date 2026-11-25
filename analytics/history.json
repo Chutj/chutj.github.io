@@ -612,9 +612,9 @@
       "pages": {
         "gallery": 214,
         "gee_access": 3,
-        "home": 5
+        "home": 0
       },
-      "retrieved_at": "2026-11-23T16:14:35.767490+08:00",
+      "retrieved_at": "2026-11-25T17:10:08.130497+08:00",
       "sample_interval": 1
     },
     {
@@ -639,6 +639,30 @@
         "home": 15
       },
       "retrieved_at": "2026-11-24T18:26:15.246371+08:00",
+      "sample_interval": 1
+    },
+    {
+      "countries": {
+        "AU": 2,
+        "CA": 5,
+        "CN": 156,
+        "DE": 1,
+        "HK": 27,
+        "JP": 86,
+        "KR": 1,
+        "NL": 1,
+        "SG": 23,
+        "TW": 54,
+        "US": 141
+      },
+      "date": "2026-11-24",
+      "page_views": 497,
+      "pages": {
+        "gallery": 465,
+        "gee_access": 11,
+        "home": 17
+      },
+      "retrieved_at": "2026-11-25T17:10:08.130497+08:00",
       "sample_interval": 1
     }
   ],
